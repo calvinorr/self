@@ -10,23 +10,20 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Core semantic colors
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+
+        // Surface hierarchy for dark theme
+        surface: {
+          DEFAULT: "hsl(var(--surface))",
+          elevated: "hsl(var(--surface-elevated))",
         },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
+
+        // UI colors
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -40,14 +37,54 @@ export default {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
+
+        // Semantic
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+
+        // Mood colors
+        positive: "hsl(var(--positive))",
+        neutral: "hsl(var(--neutral))",
+        negative: "hsl(var(--negative))",
+      },
+      fontFamily: {
+        display: ["var(--font-display)", "system-ui", "sans-serif"],
+        body: ["var(--font-body)", "Georgia", "serif"],
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      animation: {
+        "fade-in": "fadeIn 0.5s ease-out forwards",
+        "fade-up": "fadeUp 0.5s ease-out forwards",
+        "slide-in-left": "slideInLeft 0.3s ease-out forwards",
+        "scale-in": "scaleIn 0.2s ease-out forwards",
+        "pulse-soft": "pulseSoft 2s ease-in-out infinite",
+      },
+      keyframes: {
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        fadeUp: {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        slideInLeft: {
+          "0%": { opacity: "0", transform: "translateX(-10px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        scaleIn: {
+          "0%": { opacity: "0", transform: "scale(0.95)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        pulseSoft: {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
+        },
       },
       typography: {
         DEFAULT: {
@@ -60,23 +97,16 @@ export default {
             strong: {
               color: "hsl(var(--foreground))",
             },
-            h1: {
+            "h1, h2, h3, h4": {
               color: "hsl(var(--foreground))",
-            },
-            h2: {
-              color: "hsl(var(--foreground))",
-            },
-            h3: {
-              color: "hsl(var(--foreground))",
-            },
-            h4: {
-              color: "hsl(var(--foreground))",
+              fontFamily: "var(--font-display)",
             },
             code: {
               color: "hsl(var(--foreground))",
             },
             blockquote: {
               color: "hsl(var(--muted-foreground))",
+              fontStyle: "italic",
             },
           },
         },

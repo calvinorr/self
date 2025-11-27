@@ -1,9 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, Loader2, RefreshCw } from "lucide-react";
 
 interface AIInsightProps {
   title: string;
@@ -58,54 +55,83 @@ export function AIInsight({
 
   if (!displayText && !isLoading) {
     return (
-      <div className="space-y-2">
-        <Button
-          variant="outline"
-          onClick={handleAnalyze}
-          disabled={!content.trim()}
-          className="gap-2"
-        >
-          <Sparkles className="h-4 w-4" />
-          Get AI Insight
-        </Button>
+      <div className="rounded-lg border border-border bg-surface p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+              <span
+                className="material-symbols-outlined text-xl text-primary"
+                style={{ fontVariationSettings: "'FILL' 1, 'wght' 400" }}
+              >
+                psychology
+              </span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground">AI Insight</h3>
+              <p className="text-sm text-muted-foreground">Get personalized reflections on your entry</p>
+            </div>
+          </div>
+          <button
+            onClick={handleAnalyze}
+            disabled={!content.trim()}
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className="material-symbols-outlined text-lg">auto_awesome</span>
+            Generate Insight
+          </button>
+        </div>
         {error && (
-          <p className="text-sm text-destructive">{error}</p>
+          <p className="mt-4 text-sm text-destructive flex items-center gap-2">
+            <span className="material-symbols-outlined text-base">error</span>
+            {error}
+          </p>
         )}
       </div>
     );
   }
 
   return (
-    <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200 dark:border-amber-800">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium flex items-center gap-2 text-amber-800 dark:text-amber-200">
-          <Sparkles className="h-4 w-4" />
-          AI Insight
-          {!isLoading && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 ml-auto"
-              onClick={handleAnalyze}
+    <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-6 animate-fade-up opacity-0" style={{ animationFillMode: "forwards" }}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
+            <span
+              className="material-symbols-outlined text-xl text-primary"
+              style={{ fontVariationSettings: "'FILL' 1, 'wght' 400" }}
             >
-              <RefreshCw className="h-3 w-3" />
-            </Button>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+              psychology
+            </span>
+          </div>
+          <h3 className="font-semibold text-foreground">AI Insight</h3>
+        </div>
+        {!isLoading && (
+          <button
+            onClick={handleAnalyze}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors"
+            title="Regenerate insight"
+          >
+            <span className="material-symbols-outlined text-lg">refresh</span>
+          </button>
+        )}
+      </div>
+      <div className="mt-4 pl-[52px]">
         {isLoading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Analyzing your entry...
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <span className="material-symbols-outlined text-xl animate-spin">progress_activity</span>
+            <span className="text-sm">Analyzing your entry...</span>
           </div>
         ) : (
-          <p className="text-sm whitespace-pre-wrap">{displayText}</p>
+          <p className="font-body text-base leading-relaxed text-muted-foreground whitespace-pre-wrap">
+            {displayText}
+          </p>
         )}
         {error && (
-          <p className="text-sm text-destructive mt-2">{error}</p>
+          <p className="mt-4 text-sm text-destructive flex items-center gap-2">
+            <span className="material-symbols-outlined text-base">error</span>
+            {error}
+          </p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

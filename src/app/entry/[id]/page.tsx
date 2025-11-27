@@ -3,13 +3,10 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Sidebar } from "@/components/sidebar";
 import { Editor } from "@/components/editor";
 import { MoodSelect } from "@/components/mood-select";
 import { AIInsight } from "@/components/ai-insight";
-import { ArrowLeft, Save, Trash2, Loader2 } from "lucide-react";
 import type { Entry } from "@/db/schema";
 
 export default function EntryPage({
@@ -94,100 +91,133 @@ export default function EntryPage({
 
   if (isLoading) {
     return (
-      <main className="container max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      </main>
+      <div className="flex h-screen w-full">
+        <Sidebar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <span className="material-symbols-outlined text-2xl animate-spin">progress_activity</span>
+            <span>Loading entry...</span>
+          </div>
+        </main>
+      </div>
     );
   }
 
   if (!entry) {
     return (
-      <main className="container max-w-4xl mx-auto px-4 py-8">
-        <div className="text-center py-16">
-          <h2 className="text-xl font-semibold mb-2">Entry not found</h2>
-          <Link href="/">
-            <Button variant="outline">Go back</Button>
-          </Link>
-        </div>
-      </main>
+      <div className="flex h-screen w-full">
+        <Sidebar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto w-16 h-16 rounded-full bg-surface flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-3xl text-muted-foreground">error</span>
+            </div>
+            <h2 className="text-xl font-semibold text-foreground mb-2">Entry not found</h2>
+            <p className="text-muted-foreground mb-6">This entry may have been deleted.</p>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <span className="material-symbols-outlined text-lg">home</span>
+              Go back home
+            </Link>
+          </div>
+        </main>
+      </div>
     );
   }
 
   return (
-    <main className="container max-w-4xl mx-auto px-4 py-8">
-      <header className="flex items-center gap-4 mb-8">
-        <Link href="/">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <h1 className="text-2xl font-bold">Edit Entry</h1>
-        <div className="flex-1" />
-        <Button
-          variant="destructive"
-          size="icon"
-          onClick={handleDelete}
-          disabled={isDeleting}
-        >
-          {isDeleting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Trash2 className="h-4 w-4" />
-          )}
-        </Button>
-        <Button
-          onClick={handleSave}
-          disabled={!title.trim() || !content.trim() || isSaving}
-          className="gap-2"
-        >
-          {isSaving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
-          Save
-        </Button>
-      </header>
+    <div className="flex h-screen w-full">
+      <Sidebar />
 
-      <div className="space-y-6">
-        <Card>
-          <CardContent className="pt-6 space-y-4">
-            <Input
-              placeholder="Entry title..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="text-xl font-semibold border-0 px-0 focus-visible:ring-0"
-            />
-            <Editor
-              content={content}
-              onChange={setContent}
-              placeholder="What's on your mind today?"
-            />
-          </CardContent>
-        </Card>
+      <main className="flex-1 overflow-y-auto scrollbar-thin">
+        {/* Header */}
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-8 py-4">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/"
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors"
+            >
+              <span className="material-symbols-outlined text-xl">arrow_back</span>
+            </Link>
+            <h1 className="text-xl font-semibold text-foreground">Edit Entry</h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
+            >
+              {isDeleting ? (
+                <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+              ) : (
+                <span className="material-symbols-outlined text-lg">delete</span>
+              )}
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={!title.trim() || !content.trim() || isSaving}
+              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? (
+                <>
+                  <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-lg">save</span>
+                  Save Changes
+                </>
+              )}
+            </button>
+          </div>
+        </header>
 
-        <Card>
-          <CardContent className="pt-6 space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-3 block">
+        {/* Content */}
+        <div className="max-w-4xl mx-auto p-8">
+          <div className="space-y-6 animate-fade-up opacity-0" style={{ animationFillMode: "forwards" }}>
+            {/* Title & Content Card */}
+            <div className="rounded-lg border border-border bg-surface p-6">
+              <input
+                type="text"
+                placeholder="Entry title..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full bg-transparent text-2xl font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none"
+              />
+              <div className="mt-4 border-t border-border pt-4">
+                <Editor
+                  content={content}
+                  onChange={setContent}
+                  placeholder="What's on your mind today?"
+                />
+              </div>
+            </div>
+
+            {/* Mood Card */}
+            <div className="rounded-lg border border-border bg-surface p-6 animate-fade-up opacity-0 stagger-1" style={{ animationFillMode: "forwards" }}>
+              <h3 className="text-sm font-medium text-foreground mb-4">
                 How are you feeling?
-              </label>
+              </h3>
               <MoodSelect value={mood} onChange={setMood} />
             </div>
-          </CardContent>
-        </Card>
 
-        {content.trim() && (
-          <AIInsight
-            title={title}
-            content={content}
-            existingInsight={aiInsight}
-            onInsightGenerated={setAiInsight}
-          />
-        )}
-      </div>
-    </main>
+            {/* AI Insight */}
+            {content.trim() && (
+              <div className="animate-fade-up opacity-0 stagger-2" style={{ animationFillMode: "forwards" }}>
+                <AIInsight
+                  title={title}
+                  content={content}
+                  existingInsight={aiInsight}
+                  onInsightGenerated={setAiInsight}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }
