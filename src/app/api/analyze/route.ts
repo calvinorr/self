@@ -1,12 +1,31 @@
-import { streamText } from "ai";
+import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
+import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const { content, title } = await req.json();
+  try {
+    const body = await req.json();
 
-  const result = streamText({
-    model: google("gemini-2.0-flash-exp"),
-    system: `You are a thoughtful journal assistant. Analyze journal entries with empathy and provide meaningful insights.
+    // useCompletion sends { prompt: "..." } - parse the JSON string we sent
+    let title = "";
+    let content = "";
+
+    if (body.prompt) {
+      try {
+        const parsed = JSON.parse(body.prompt);
+        title = parsed.title || "";
+        content = parsed.content || "";
+      } catch {
+        content = body.prompt;
+      }
+    } else {
+      title = body.title || "";
+      content = body.content || "";
+    }
+
+    const { text } = await generateText({
+      model: google("gemini-2.0-flash"),
+      system: `You are a thoughtful journal assistant. Analyze journal entries with empathy and provide meaningful insights.
 
 Your analysis should:
 - Identify key themes and emotions in the entry
@@ -16,13 +35,20 @@ Your analysis should:
 - Keep your response concise (2-3 paragraphs max)
 
 Be warm and supportive, like a wise friend who listens carefully.`,
-    prompt: `Please analyze this journal entry:
+      prompt: `Please analyze this journal entry:
 
 Title: ${title}
 
 Entry:
 ${content}`,
-  });
+    });
 
-  return result.toDataStreamResponse();
+    return NextResponse.json({ text });
+  } catch (error) {
+    console.error("Analyze API error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 }
+    );
+  }
 }

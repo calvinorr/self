@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useCompletion } from "ai/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkles, Loader2, RefreshCw } from "lucide-react";
@@ -20,34 +19,59 @@ export function AIInsight({
   onInsightGenerated,
 }: AIInsightProps) {
   const [insight, setInsight] = useState(existingInsight || "");
-
-  const { complete, isLoading } = useCompletion({
-    api: "/api/analyze",
-    onFinish: (prompt, completion) => {
-      setInsight(completion);
-      onInsightGenerated(completion);
-    },
-  });
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleAnalyze = async () => {
+    setError(null);
+    setIsLoading(true);
+
     const stripHtml = (html: string) => {
       return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
     };
 
-    await complete(JSON.stringify({ title, content: stripHtml(content) }));
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content: stripHtml(content) }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to analyze");
+      }
+
+      setInsight(data.text);
+      onInsightGenerated(data.text);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "An error occurred";
+      setError(message);
+      console.error("AI Analysis error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  if (!insight && !isLoading) {
+  const displayText = insight;
+
+  if (!displayText && !isLoading) {
     return (
-      <Button
-        variant="outline"
-        onClick={handleAnalyze}
-        disabled={!content.trim()}
-        className="gap-2"
-      >
-        <Sparkles className="h-4 w-4" />
-        Get AI Insight
-      </Button>
+      <div className="space-y-2">
+        <Button
+          variant="outline"
+          onClick={handleAnalyze}
+          disabled={!content.trim()}
+          className="gap-2"
+        >
+          <Sparkles className="h-4 w-4" />
+          Get AI Insight
+        </Button>
+        {error && (
+          <p className="text-sm text-destructive">{error}</p>
+        )}
+      </div>
     );
   }
 
@@ -76,7 +100,10 @@ export function AIInsight({
             Analyzing your entry...
           </div>
         ) : (
-          <p className="text-sm whitespace-pre-wrap">{insight}</p>
+          <p className="text-sm whitespace-pre-wrap">{displayText}</p>
+        )}
+        {error && (
+          <p className="text-sm text-destructive mt-2">{error}</p>
         )}
       </CardContent>
     </Card>
