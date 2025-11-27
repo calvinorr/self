@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
+import { EntrySearch } from "@/components/entry-search";
+import { MoodTrendsChart } from "@/components/mood-trends-chart";
+import { AIThemes } from "@/components/ai-themes";
+import { PeriodSummary } from "@/components/period-summary";
 import Link from "next/link";
 
 interface Entry {
@@ -39,21 +44,12 @@ const MOOD_COLORS: Record<string, string> = {
   sad: "bg-blue-500",
 };
 
-function stripHtml(html: string) {
-  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-}
-
-function getWeekNumber(date: Date) {
-  const start = new Date(date.getFullYear(), 0, 1);
-  const diff = date.getTime() - start.getTime();
-  const oneWeek = 604800000;
-  return Math.ceil(diff / oneWeek);
-}
-
 export default function InsightsPage() {
+  const router = useRouter();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<"week" | "month" | "year" | "all">("month");
+  const [moodChartRange, setMoodChartRange] = useState<"week" | "month" | "quarter">("month");
 
   useEffect(() => {
     async function fetchEntries() {
@@ -144,7 +140,6 @@ export default function InsightsPage() {
     const today = new Date().toDateString();
     const yesterday = new Date(Date.now() - 86400000).toDateString();
 
-    // Check if user wrote today or yesterday (to not break streak)
     if (sortedDates[0] !== today && sortedDates[0] !== yesterday) {
       return 0;
     }
@@ -156,7 +151,6 @@ export default function InsightsPage() {
       if (current.toDateString() === expected.toDateString()) {
         streak++;
       } else if (i === 0 && sortedDates[0] === yesterday) {
-        // Started from yesterday, that's okay
         streak++;
       } else {
         break;
@@ -165,31 +159,6 @@ export default function InsightsPage() {
 
     return streak;
   }, [entries]);
-
-  // Extract common themes from titles
-  const commonThemes = useMemo(() => {
-    const words: Record<string, number> = {};
-    const stopWords = new Set([
-      "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
-      "of", "with", "by", "from", "as", "is", "was", "are", "were", "been",
-      "be", "have", "has", "had", "do", "does", "did", "will", "would", "could",
-      "should", "may", "might", "must", "i", "my", "me", "we", "our", "you",
-      "your", "it", "its", "this", "that", "these", "those", "just", "about",
-    ]);
-
-    filteredEntries.forEach((entry) => {
-      const text = `${entry.title} ${stripHtml(entry.content)}`.toLowerCase();
-      const tokens = text.split(/\W+/).filter((w) => w.length > 3 && !stopWords.has(w));
-      tokens.forEach((word) => {
-        words[word] = (words[word] || 0) + 1;
-      });
-    });
-
-    return Object.entries(words)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
-      .map(([word, count]) => ({ word, count }));
-  }, [filteredEntries]);
 
   // Activity heatmap data (last 12 weeks)
   const activityData = useMemo(() => {
@@ -216,6 +185,10 @@ export default function InsightsPage() {
 
   const entriesWithInsights = filteredEntries.filter((e) => e.aiInsight).length;
 
+  const handleEntryClick = (entryId: number) => {
+    router.push(`/entry/${entryId}`);
+  };
+
   return (
     <div className="flex h-screen w-full">
       <Sidebar />
@@ -223,7 +196,7 @@ export default function InsightsPage() {
         <div className="p-8">
           {/* Header */}
           <header className="mb-8 animate-fade-up opacity-0" style={{ animationFillMode: "forwards" }}>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
               <div>
                 <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
                   Insights
@@ -233,21 +206,28 @@ export default function InsightsPage() {
                 </p>
               </div>
 
-              {/* Time Range Toggle */}
-              <div className="flex h-10 items-center rounded-lg bg-surface p-1">
-                {(["week", "month", "year", "all"] as const).map((range) => (
-                  <button
-                    key={range}
-                    onClick={() => setTimeRange(range)}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize ${
-                      timeRange === range
-                        ? "bg-background text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {range === "all" ? "All time" : `This ${range}`}
-                  </button>
-                ))}
+              <div className="flex items-center gap-4">
+                {/* Search */}
+                <div className="w-64">
+                  <EntrySearch entries={entries} />
+                </div>
+
+                {/* Time Range Toggle */}
+                <div className="flex h-10 items-center rounded-lg bg-surface p-1">
+                  {(["week", "month", "year", "all"] as const).map((range) => (
+                    <button
+                      key={range}
+                      onClick={() => setTimeRange(range)}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize ${
+                        timeRange === range
+                          ? "bg-background text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {range === "all" ? "All time" : `This ${range}`}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </header>
@@ -330,7 +310,37 @@ export default function InsightsPage() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {/* Mood Trends Chart - NEW */}
+              <div
+                className="rounded-xl border border-border bg-surface p-6 mb-8 animate-fade-up opacity-0"
+                style={{ animationDelay: "0.25s", animationFillMode: "forwards" }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-foreground">Mood Trends</h2>
+                  <div className="flex h-9 items-center rounded-lg bg-surface-elevated p-1">
+                    {(["week", "month", "quarter"] as const).map((range) => (
+                      <button
+                        key={range}
+                        onClick={() => setMoodChartRange(range)}
+                        className={`px-3 py-1 text-sm font-medium rounded-md transition-colors capitalize ${
+                          moodChartRange === range
+                            ? "bg-background text-foreground"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {range === "quarter" ? "90 days" : range === "month" ? "30 days" : "7 days"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <MoodTrendsChart
+                  entries={entries}
+                  timeRange={moodChartRange}
+                  onEntryClick={handleEntryClick}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
                 {/* Mood Distribution */}
                 <div
                   className="rounded-xl border border-border bg-surface p-6 animate-fade-up opacity-0"
@@ -377,79 +387,64 @@ export default function InsightsPage() {
                   </div>
                 </div>
 
-                {/* Common Themes */}
+                {/* Weekly/Monthly Summary - NEW */}
                 <div
-                  className="rounded-xl border border-border bg-surface p-6 animate-fade-up opacity-0"
+                  className="animate-fade-up opacity-0"
                   style={{ animationDelay: "0.35s", animationFillMode: "forwards" }}
                 >
-                  <h2 className="text-lg font-semibold text-foreground mb-4">
-                    Common Themes
-                  </h2>
-                  {commonThemes.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {commonThemes.map((theme, index) => (
-                        <span
-                          key={theme.word}
-                          className="rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary capitalize"
-                          style={{
-                            opacity: 1 - index * 0.08,
-                            fontSize: `${Math.max(0.75, 1 - index * 0.04)}rem`,
-                          }}
-                        >
-                          {theme.word}
-                          <span className="ml-1.5 text-primary/60">({theme.count})</span>
-                        </span>
+                  <PeriodSummary entries={entries} />
+                </div>
+              </div>
+
+              {/* AI Themes - NEW */}
+              <div
+                className="mb-8 animate-fade-up opacity-0"
+                style={{ animationDelay: "0.4s", animationFillMode: "forwards" }}
+              >
+                <AIThemes entries={entries} />
+              </div>
+
+              {/* Activity Heatmap */}
+              <div
+                className="rounded-xl border border-border bg-surface p-6 animate-fade-up opacity-0"
+                style={{ animationDelay: "0.45s", animationFillMode: "forwards" }}
+              >
+                <h2 className="text-lg font-semibold text-foreground mb-4">
+                  Writing Activity
+                </h2>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Last 12 weeks
+                </p>
+                <div className="flex gap-1">
+                  {activityData.map((week, weekIndex) => (
+                    <div key={weekIndex} className="flex flex-col gap-1">
+                      {week.days.map((count, dayIndex) => (
+                        <div
+                          key={dayIndex}
+                          className={`h-4 w-4 rounded-sm transition-colors ${
+                            count === 0
+                              ? "bg-surface-elevated"
+                              : count === 1
+                              ? "bg-primary/30"
+                              : count === 2
+                              ? "bg-primary/60"
+                              : "bg-primary"
+                          }`}
+                          title={`${count} ${count === 1 ? "entry" : "entries"}`}
+                        />
                       ))}
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Write more entries to discover themes
-                    </p>
-                  )}
+                  ))}
                 </div>
-
-                {/* Activity Heatmap */}
-                <div
-                  className="rounded-xl border border-border bg-surface p-6 lg:col-span-2 animate-fade-up opacity-0"
-                  style={{ animationDelay: "0.4s", animationFillMode: "forwards" }}
-                >
-                  <h2 className="text-lg font-semibold text-foreground mb-4">
-                    Writing Activity
-                  </h2>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Last 12 weeks
-                  </p>
+                <div className="mt-3 flex items-center justify-end gap-2 text-xs text-muted-foreground">
+                  <span>Less</span>
                   <div className="flex gap-1">
-                    {activityData.map((week, weekIndex) => (
-                      <div key={weekIndex} className="flex flex-col gap-1">
-                        {week.days.map((count, dayIndex) => (
-                          <div
-                            key={dayIndex}
-                            className={`h-4 w-4 rounded-sm transition-colors ${
-                              count === 0
-                                ? "bg-surface-elevated"
-                                : count === 1
-                                ? "bg-primary/30"
-                                : count === 2
-                                ? "bg-primary/60"
-                                : "bg-primary"
-                            }`}
-                            title={`${count} ${count === 1 ? "entry" : "entries"}`}
-                          />
-                        ))}
-                      </div>
-                    ))}
+                    <div className="h-3 w-3 rounded-sm bg-surface-elevated" />
+                    <div className="h-3 w-3 rounded-sm bg-primary/30" />
+                    <div className="h-3 w-3 rounded-sm bg-primary/60" />
+                    <div className="h-3 w-3 rounded-sm bg-primary" />
                   </div>
-                  <div className="mt-3 flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                    <span>Less</span>
-                    <div className="flex gap-1">
-                      <div className="h-3 w-3 rounded-sm bg-surface-elevated" />
-                      <div className="h-3 w-3 rounded-sm bg-primary/30" />
-                      <div className="h-3 w-3 rounded-sm bg-primary/60" />
-                      <div className="h-3 w-3 rounded-sm bg-primary" />
-                    </div>
-                    <span>More</span>
-                  </div>
+                  <span>More</span>
                 </div>
               </div>
             </>

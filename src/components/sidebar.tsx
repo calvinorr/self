@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "./theme-toggle";
 
 interface NavItem {
   href: string;
@@ -107,6 +108,7 @@ export function Sidebar() {
               isActive={pathname.startsWith(item.href)}
             />
           ))}
+          <ThemeToggle />
         </nav>
 
         {/* User Profile */}

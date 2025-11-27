@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sidebar } from "@/components/sidebar";
 import { Editor } from "@/components/editor";
 import { MoodSelect } from "@/components/mood-select";
 import { AIInsight } from "@/components/ai-insight";
+import { useAutosave } from "@/hooks/use-autosave";
+import { SaveStatusIndicator } from "@/components/save-status";
 import type { Entry } from "@/db/schema";
 
 export default function EntryPage({
@@ -24,6 +26,7 @@ export default function EntryPage({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useEffect(() => {
     async function fetchEntry() {
@@ -36,6 +39,7 @@ export default function EntryPage({
           setContent(data.content);
           setMood(data.mood);
           setAiInsight(data.aiInsight);
+          setIsDataLoaded(true);
         }
       } catch (error) {
         console.error("Failed to fetch entry:", error);
@@ -46,6 +50,29 @@ export default function EntryPage({
 
     fetchEntry();
   }, [id]);
+
+  const handleAutosave = useCallback(async () => {
+    if (!title.trim() || !content.trim()) return false;
+
+    try {
+      const response = await fetch(`/api/entries/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content, mood, aiInsight }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error("Autosave failed:", error);
+      return false;
+    }
+  }, [id, title, content, mood, aiInsight]);
+
+  const { status, lastSaved } = useAutosave({
+    data: { title, content, mood, aiInsight },
+    onSave: handleAutosave,
+    interval: 30000,
+    enabled: isDataLoaded && !!(title.trim() && content.trim()),
+  });
 
   const handleSave = async () => {
     if (!title.trim() || !content.trim()) return;
@@ -142,6 +169,7 @@ export default function EntryPage({
               <span className="material-symbols-outlined text-xl">arrow_back</span>
             </Link>
             <h1 className="text-xl font-semibold text-foreground">Edit Entry</h1>
+            <SaveStatusIndicator status={status} lastSaved={lastSaved} />
           </div>
           <div className="flex items-center gap-3">
             <button
