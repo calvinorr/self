@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { entries } from "@/db/schema";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
+import { auth } from "@/auth";
 
 export async function GET() {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const allEntries = await db
       .select()
       .from(entries)
+      .where(eq(entries.userId, session.user.id))
       .orderBy(desc(entries.createdAt));
 
     return NextResponse.json(allEntries);
@@ -22,12 +29,18 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { title, content, mood, aiInsight } = body;
 
     const [newEntry] = await db
       .insert(entries)
       .values({
+        userId: session.user.id,
         title,
         content,
         mood,

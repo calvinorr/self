@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { db } from "@/db";
 import { entries } from "@/db/schema";
-import { desc } from "drizzle-orm";
-import { Sidebar } from "@/components/sidebar";
+import { desc, eq } from "drizzle-orm";
+import { AppLayout } from "@/components/app-layout";
 import { EntryCard } from "@/components/entry-card";
 import { InsightsPanel } from "@/components/insights-panel";
+import { auth } from "@/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -16,14 +17,18 @@ function getGreeting(): string {
 }
 
 export default async function HomePage() {
-  const allEntries = await db
-    .select()
-    .from(entries)
-    .orderBy(desc(entries.createdAt));
+  const session = await auth();
+
+  const allEntries = session?.user?.id
+    ? await db
+        .select()
+        .from(entries)
+        .where(eq(entries.userId, session.user.id))
+        .orderBy(desc(entries.createdAt))
+    : [];
 
   return (
-    <div className="flex h-screen w-full">
-      <Sidebar />
+    <AppLayout>
 
       <main className="flex-1 overflow-y-auto scrollbar-thin">
         {/* Header */}
@@ -92,6 +97,6 @@ export default async function HomePage() {
           {allEntries.length > 0 && <InsightsPanel entries={allEntries} />}
         </div>
       </main>
-    </div>
+    </AppLayout>
   );
 }

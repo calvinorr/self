@@ -1,18 +1,29 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { entries } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+import { auth } from "@/auth";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const [entry] = await db
       .select()
       .from(entries)
-      .where(eq(entries.id, parseInt(id)));
+      .where(
+        and(
+          eq(entries.id, parseInt(id)),
+          eq(entries.userId, session.user.id)
+        )
+      );
 
     if (!entry) {
       return NextResponse.json({ error: "Entry not found" }, { status: 404 });
@@ -33,6 +44,11 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await req.json();
     const { title, content, mood, aiInsight } = body;
@@ -46,7 +62,12 @@ export async function PUT(
         aiInsight,
         updatedAt: new Date(),
       })
-      .where(eq(entries.id, parseInt(id)))
+      .where(
+        and(
+          eq(entries.id, parseInt(id)),
+          eq(entries.userId, session.user.id)
+        )
+      )
       .returning();
 
     if (!updatedEntry) {
@@ -68,10 +89,20 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const [deletedEntry] = await db
       .delete(entries)
-      .where(eq(entries.id, parseInt(id)))
+      .where(
+        and(
+          eq(entries.id, parseInt(id)),
+          eq(entries.userId, session.user.id)
+        )
+      )
       .returning();
 
     if (!deletedEntry) {

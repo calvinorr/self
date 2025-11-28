@@ -33,8 +33,8 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 | E1 | Foundation | ✅ Complete | L |
 | E2 | Enhanced Writing | ✅ Complete | M |
 | E3 | Insight & Discovery | ✅ Complete | L |
-| E4 | Privacy & Security | Planned | M |
-| E5 | Cross-Platform | Planned | XL |
+| E4 | Privacy & Security | ✅ Complete (Auth) | M |
+| E5 | Cross-Platform | Skipped (using Vercel) | XL |
 | E6 | Advanced AI | Planned | L |
 
 ---
@@ -183,49 +183,33 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 ### Epic Statement
 *As a person sharing my deepest thoughts, I want complete confidence that my data is secure and private, so that I can write freely without fear.*
 
+### Status: ✅ Complete (Authentication)
+
 ### Business Value
 - Trust is table stakes for personal journaling
 - Differentiator vs. competitors with weaker privacy
 - Enables premium positioning
 
-### User Stories
+### Stories Delivered
 
-| ID | Story | Priority | Points |
+| ID | Story | Priority | Status |
 |----|-------|----------|--------|
-| E4-S1 | As a user, I want to lock the app with a passcode or biometrics | P1 | 5 |
-| E4-S2 | As a user, I want my entries encrypted so no one can read them | P1 | 8 |
-| E4-S3 | As a user, I want to export all my data in a standard format | P1 | 3 |
-| E4-S4 | As a user, I want to permanently delete my account and all data | P1 | 3 |
-| E4-S5 | As a privacy-conscious user, I want a local-only mode with no cloud sync | P2 | 5 |
-| E4-S6 | As an advanced user, I want to manage my own encryption keys | P2 | 5 |
+| E4-Auth | As a user, I want to log in with GitHub/Google so only I can access my journal | P1 | ✅ Done |
+| E4-S3 | As a user, I want to export all my data in a standard format | P1 | ✅ Done (Settings page) |
 
-### Acceptance Criteria
+### What Was Implemented
+- **Auth.js v5** with GitHub and Google OAuth providers
+- **Protected routes** - all pages require authentication
+- **User-scoped entries** - each user only sees their own entries
+- **Session management** - user profile in sidebar with sign out
+- **Data export** - JSON export available in Settings
 
-**E4-S1: App Lock**
-- [ ] Enable/disable in settings
-- [ ] Supports PIN (4-6 digits) and biometrics (Face ID / Touch ID)
-- [ ] Locks after 1 minute of inactivity (configurable)
-- [ ] Failed attempts show countdown before retry
-
-**E4-S2: Encryption**
-- [ ] All entries encrypted at rest using AES-256
-- [ ] Encryption key derived from user password
-- [ ] Decryption happens client-side only
-- [ ] Clear documentation of security model
-
-**E4-S3: Data Export**
-- [ ] Export as JSON (complete data)
-- [ ] Export as Markdown (human-readable)
-- [ ] Includes all entries, moods, AI insights
-- [ ] Download as ZIP file
-
-### Dependencies
-- E1 complete (MVP)
-
-### Definition of Done
-- Security audit by qualified reviewer
-- No plaintext entries visible in database
-- Export includes all user data
+### Deferred (not needed for personal use)
+- E4-S1: App lock with passcode/biometrics
+- E4-S2: End-to-end encryption
+- E4-S4: Account deletion
+- E4-S5: Local-only mode
+- E4-S6: Custom encryption keys
 
 ---
 

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
+import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -48,8 +50,29 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
   );
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  user?: {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  } | null;
+}
+
+export function Sidebar({ user: propUser }: SidebarProps = {}) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  // Use prop user if provided (server component), otherwise use session (client component)
+  const user = propUser ?? session?.user;
+
+  const initials = user?.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : user?.email?.[0]?.toUpperCase() || "U";
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-border bg-surface p-4">
@@ -70,7 +93,7 @@ export function Sidebar() {
             />
           </svg>
         </div>
-        <h1 className="text-lg font-bold text-foreground">MindScribe</h1>
+        <h1 className="text-lg font-bold text-foreground">Self Journal</h1>
       </div>
 
       {/* Main Navigation */}
@@ -112,15 +135,38 @@ export function Sidebar() {
         </nav>
 
         {/* User Profile */}
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-elevated text-sm font-medium text-muted-foreground">
-            U
+        {user && (
+          <div className="flex items-center gap-3 rounded-lg px-3 py-2 border-t border-border pt-4">
+            {user.image ? (
+              <Image
+                src={user.image}
+                alt={user.name || "User"}
+                width={40}
+                height={40}
+                className="h-10 w-10 rounded-full"
+              />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
+                {initials}
+              </div>
+            )}
+            <div className="flex flex-1 flex-col min-w-0">
+              <span className="text-sm font-medium text-foreground truncate">
+                {user.name || "User"}
+              </span>
+              <span className="text-xs text-muted-foreground truncate">
+                {user.email}
+              </span>
+            </div>
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors"
+              title="Sign out"
+            >
+              <span className="material-symbols-outlined text-lg">logout</span>
+            </button>
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-foreground">User</span>
-            <span className="text-xs text-muted-foreground">Personal Journal</span>
-          </div>
-        </div>
+        )}
       </div>
     </aside>
   );
