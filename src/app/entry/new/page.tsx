@@ -5,11 +5,19 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sidebar } from "@/components/sidebar";
 import { Editor } from "@/components/editor";
-import { MoodSelect } from "@/components/mood-select";
-import { AIInsight } from "@/components/ai-insight";
 import { useAutosave } from "@/hooks/use-autosave";
 import { SaveStatusIndicator } from "@/components/save-status";
-import { WritingPrompt } from "@/components/writing-prompt";
+import { cn } from "@/lib/utils";
+import { getRandomPrompt } from "@/lib/prompts";
+
+// Mood options with distinct colors always visible
+const moods = [
+  { value: "great", icon: "sentiment_very_satisfied", label: "Great", color: "text-emerald-400", bg: "bg-emerald-400/15 border-emerald-400/40 hover:bg-emerald-400/25" },
+  { value: "good", icon: "sentiment_satisfied", label: "Good", color: "text-sky-400", bg: "bg-sky-400/15 border-sky-400/40 hover:bg-sky-400/25" },
+  { value: "okay", icon: "sentiment_neutral", label: "Okay", color: "text-amber-400", bg: "bg-amber-400/15 border-amber-400/40 hover:bg-amber-400/25" },
+  { value: "low", icon: "sentiment_dissatisfied", label: "Low", color: "text-orange-400", bg: "bg-orange-400/15 border-orange-400/40 hover:bg-orange-400/25" },
+  { value: "rough", icon: "sentiment_sad", label: "Rough", color: "text-rose-400", bg: "bg-rose-400/15 border-rose-400/40 hover:bg-rose-400/25" },
+];
 
 export default function NewEntryPage() {
   const router = useRouter();
@@ -17,8 +25,12 @@ export default function NewEntryPage() {
   const [content, setContent] = useState("");
   const [mood, setMood] = useState<string | null>(null);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [entryId, setEntryId] = useState<number | null>(null);
+  const [showInspiration, setShowInspiration] = useState(false);
+  const [currentPrompt, setCurrentPrompt] = useState<string | null>(null);
+  const [showAiPanel, setShowAiPanel] = useState(false);
   const isCreatingRef = useRef(false);
 
   const handleAutosave = useCallback(async () => {
@@ -27,7 +39,6 @@ export default function NewEntryPage() {
 
     try {
       if (entryId) {
-        // Update existing draft
         const response = await fetch(`/api/entries/${entryId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -35,7 +46,6 @@ export default function NewEntryPage() {
         });
         return response.ok;
       } else {
-        // Create new entry (first autosave)
         isCreatingRef.current = true;
         const response = await fetch("/api/entries", {
           method: "POST",
@@ -45,7 +55,6 @@ export default function NewEntryPage() {
         if (response.ok) {
           const data = await response.json();
           setEntryId(data.id);
-          // Update URL without navigation
           window.history.replaceState(null, "", `/entry/${data.id}`);
         }
         isCreatingRef.current = false;
@@ -98,91 +107,252 @@ export default function NewEntryPage() {
     }
   };
 
+  const handleAnalyze = async () => {
+    if (!content.trim()) return;
+
+    setIsAnalyzing(true);
+    setShowAiPanel(true);
+    const stripHtml = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content: stripHtml(content) }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setAiInsight(data.text);
+      }
+    } catch (err) {
+      console.error("AI Analysis error:", err);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const generatePrompt = () => {
+    setCurrentPrompt(getRandomPrompt());
+    setShowInspiration(true);
+  };
+
+  const usePrompt = () => {
+    if (currentPrompt) {
+      setTitle(currentPrompt);
+      setContent(`<p></p>`);
+      setShowInspiration(false);
+    }
+  };
+
+  const wordCount = content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().split(/\s+/).filter(Boolean).length;
+
   return (
     <div className="flex h-screen w-full">
       <Sidebar />
 
-      <main className="flex-1 overflow-y-auto scrollbar-thin">
+      <main className="flex-1 flex flex-col overflow-hidden bg-background">
         {/* Header */}
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-8 py-4">
-          <div className="flex items-center gap-4">
+        <header className="shrink-0 flex items-center justify-between border-b border-border bg-surface/50 backdrop-blur-sm px-6 py-3">
+          <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors"
             >
               <span className="material-symbols-outlined text-xl">arrow_back</span>
             </Link>
-            <h1 className="text-xl font-semibold text-foreground">New Entry</h1>
+            <div className="h-5 w-px bg-border" />
             <SaveStatusIndicator status={status} lastSaved={lastSaved} />
           </div>
-          <button
-            onClick={handleSave}
-            disabled={!title.trim() || !content.trim() || isSaving}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSaving ? (
-              <>
-                <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
-                Saving...
-              </>
-            ) : (
-              <>
-                <span className="material-symbols-outlined text-lg">save</span>
-                Save Entry
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {wordCount} {wordCount === 1 ? "word" : "words"}
+            </span>
+            <button
+              onClick={handleSave}
+              disabled={!title.trim() || !content.trim() || isSaving}
+              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? (
+                <>
+                  <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-base">check</span>
+                  Done
+                </>
+              )}
+            </button>
+          </div>
         </header>
 
-        {/* Content */}
-        <div className="max-w-4xl mx-auto p-8">
-          <div className="space-y-6 animate-fade-up opacity-0" style={{ animationFillMode: "forwards" }}>
-            {/* Writing Prompt */}
-            {!content.trim() && (
-              <WritingPrompt
-                onSelectPrompt={(prompt) => {
-                  setTitle(prompt);
-                  setContent(`<p>${prompt}</p><p></p>`);
-                }}
-              />
+        {/* Main Writing Area - Full Width */}
+        <div className="flex-1 overflow-y-auto scrollbar-thin">
+          <div className="max-w-5xl mx-auto px-8 pt-8 pb-16">
+            {/* Inspiration Button */}
+            {!content.trim() && !showInspiration && (
+              <button
+                onClick={generatePrompt}
+                className="group mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <span
+                  className="material-symbols-outlined text-lg group-hover:animate-pulse"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >
+                  auto_awesome
+                </span>
+                <span>Need inspiration?</span>
+              </button>
             )}
 
-            {/* Title & Content Card */}
-            <div className="rounded-lg border border-border bg-surface p-6">
+            {/* Inspiration Card */}
+            {showInspiration && currentPrompt && (
+              <div className="mb-6 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 via-primary/10 to-transparent p-5">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20">
+                    <span
+                      className="material-symbols-outlined text-lg text-primary"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      auto_awesome
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-primary uppercase tracking-wider mb-1">
+                      Writing Prompt
+                    </p>
+                    <p className="text-base text-foreground leading-relaxed">
+                      {currentPrompt}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 mt-4 ml-12">
+                  <button
+                    onClick={usePrompt}
+                    className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm">check</span>
+                    Use this
+                  </button>
+                  <button
+                    onClick={generatePrompt}
+                    className="flex items-center gap-1.5 rounded-lg bg-surface-elevated px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm">refresh</span>
+                    Another
+                  </button>
+                  <button
+                    onClick={() => setShowInspiration(false)}
+                    className="rounded-lg px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Title Row with Mood */}
+            <div className="flex items-start gap-6 mb-4">
               <input
                 type="text"
-                placeholder="Entry title..."
+                placeholder="What's on your mind?"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-transparent text-2xl font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none"
+                className="flex-1 bg-transparent text-2xl font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none"
               />
-              <div className="mt-4 border-t border-border pt-4">
-                <Editor
-                  content={content}
-                  onChange={setContent}
-                  placeholder="What's on your mind today?"
-                />
+
+              {/* Mood Tracker - Compact inline */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {moods.map((m) => (
+                  <button
+                    key={m.value}
+                    onClick={() => setMood(mood === m.value ? null : m.value)}
+                    className={cn(
+                      "flex items-center justify-center w-9 h-9 rounded-lg border transition-all duration-200",
+                      mood === m.value
+                        ? `${m.bg} ${m.color} border-current`
+                        : `border-transparent hover:border-border hover:bg-surface-elevated/50`
+                    )}
+                    title={m.label}
+                  >
+                    <span
+                      className={cn("material-symbols-outlined text-xl", m.color)}
+                      style={{ fontVariationSettings: mood === m.value ? "'FILL' 1, 'wght' 500" : "'FILL' 0, 'wght' 400" }}
+                    >
+                      {m.icon}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Mood Card */}
-            <div className="rounded-lg border border-border bg-surface p-6 animate-fade-up opacity-0 stagger-1" style={{ animationFillMode: "forwards" }}>
-              <h3 className="text-sm font-medium text-foreground mb-4">
-                How are you feeling?
-              </h3>
-              <MoodSelect value={mood} onChange={setMood} />
+            {/* Editor - Larger */}
+            <div className="min-h-[300px]">
+              <Editor
+                content={content}
+                onChange={setContent}
+                placeholder="Start writing... Let your thoughts flow freely."
+                className="min-h-[300px]"
+              />
             </div>
 
-            {/* AI Insight */}
-            {content.trim() && (
-              <div className="animate-fade-up opacity-0 stagger-2" style={{ animationFillMode: "forwards" }}>
-                <AIInsight
-                  title={title}
-                  content={content}
-                  onInsightGenerated={setAiInsight}
-                />
+            {/* AI Reflection Panel */}
+            <div className="mt-8">
+              <div className="rounded-xl border border-border bg-surface/50 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="material-symbols-outlined text-xl text-primary"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      psychology
+                    </span>
+                    <p className="text-sm font-medium text-foreground">
+                      AI Reflection
+                    </p>
+                  </div>
+                  {!isAnalyzing && (
+                    <button
+                      onClick={handleAnalyze}
+                      disabled={!content.trim()}
+                      className="flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/20 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <span
+                        className="material-symbols-outlined text-base"
+                        style={{ fontVariationSettings: "'FILL' 1" }}
+                      >
+                        auto_awesome
+                      </span>
+                      {aiInsight ? "Regenerate" : "Generate Insight"}
+                    </button>
+                  )}
+                </div>
+
+                {!aiInsight && !isAnalyzing && !showAiPanel && (
+                  <p className="text-sm text-muted-foreground">
+                    Get AI-powered reflections on your writing to gain deeper insights into your thoughts.
+                  </p>
+                )}
+
+                {isAnalyzing && (
+                  <div className="flex items-center gap-3 text-muted-foreground py-4">
+                    <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                    <span className="text-sm">Analyzing your thoughts...</span>
+                  </div>
+                )}
+
+                {aiInsight && !isAnalyzing && (
+                  <div className="rounded-lg bg-primary/5 border border-primary/10 p-4">
+                    <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                      {aiInsight}
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
+
+            </div>
           </div>
         </div>
       </main>

@@ -1,5 +1,7 @@
 import { signIn } from "@/auth";
 
+const isDev = process.env.NODE_ENV === "development";
+
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -8,11 +10,11 @@ export default function LoginPage() {
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
             <span className="material-symbols-outlined text-3xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
-              book_4
+              psychology
             </span>
           </div>
           <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
-            Self Journal
+            MindScribe AI
           </h1>
           <p className="mt-2 text-muted-foreground">
             Your private space for reflection and growth
@@ -74,6 +76,34 @@ export default function LoginPage() {
                 Continue with Google
               </button>
             </form>
+
+            {/* Dev Login - Only shown in development */}
+            {isDev && (
+              <>
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-surface px-2 text-orange-500">DEV MODE</span>
+                  </div>
+                </div>
+                <form
+                  action={async () => {
+                    "use server";
+                    await signIn("dev-login", { email: "dev@localhost", redirectTo: "/" });
+                  }}
+                >
+                  <button
+                    type="submit"
+                    className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-dashed border-orange-500/50 bg-orange-500/10 px-4 py-3 text-sm font-semibold text-orange-500 transition-all hover:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-background"
+                  >
+                    <span className="material-symbols-outlined text-xl">developer_mode</span>
+                    Dev Login (Local Only)
+                  </button>
+                </form>
+              </>
+            )}
           </div>
 
           <p className="mt-6 text-center text-xs text-muted-foreground">

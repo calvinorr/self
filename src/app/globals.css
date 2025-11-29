@@ -11,7 +11,7 @@
     --surface: 210 40% 98%;
     --surface-elevated: 0 0% 100%;
 
-    --primary: 239 84% 67%;
+    --primary: 224 42% 39%;
     --primary-foreground: 0 0% 100%;
 
     --muted: 210 40% 96%;
@@ -40,17 +40,17 @@
 
   .dark {
     /* Dark theme */
-    --background: 224 71% 4%;
+    --background: 200 30% 7%;
     --foreground: 213 31% 91%;
 
-    --surface: 215 28% 9%;
-    --surface-elevated: 217 33% 12%;
+    --surface: 200 25% 11%;
+    --surface-elevated: 200 22% 15%;
 
-    --primary: 239 84% 67%;
+    --primary: 224 42% 39%;
     --primary-foreground: 0 0% 100%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 200 22% 17%;
+    --muted-foreground: 195 30% 68%;
 
     --accent: 217 33% 17%;
     --accent-foreground: 210 40% 98%;

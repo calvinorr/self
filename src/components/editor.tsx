@@ -44,6 +44,7 @@ export function Editor({
     editorProps: {
       attributes: {
         class: "tiptap prose prose-sm sm:prose-base focus:outline-none",
+        spellcheck: "true",
       },
     },
   });
