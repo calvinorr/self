@@ -35,7 +35,8 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 | E3 | Insight & Discovery | ✅ Complete | L |
 | E4 | Privacy & Security | ✅ Complete (Auth) | M |
 | E5 | Deployment | ✅ Complete | M |
-| E6 | Advanced AI | Planned | L |
+| E6 | UI/UX Polish | ✅ Complete | M |
+| E7 | Advanced AI | Planned | L |
 
 ---
 
@@ -276,7 +277,44 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 
 ---
 
-## Epic 6: Advanced AI (The Wisdom)
+## Epic 6: UI/UX Polish (The Refinement)
+
+### Epic Statement
+*As a user, I want a polished, professional interface that feels delightful to use, so that journaling becomes an enjoyable daily ritual.*
+
+### Status: ✅ Complete
+
+### What Was Implemented
+
+**Branding & Identity**
+- [x] Rebranded from "Self Journal" to "MindScribe AI"
+- [x] New logo using psychology icon
+- [x] Updated color palette with primary blue (#3A4D8F)
+- [x] Consistent visual language across all pages
+
+**Insights Page Redesign**
+- [x] Replaced chart-heavy design with narrative AI analysis
+- [x] Three insight cards: Emotional Patterns, Growth Themes, Key Reflection
+- [x] Core Topics section showing recurring themes
+- [x] Relevant Excerpts from recent entries
+- [x] Regenerate analysis on demand
+
+**Entry Page Improvements**
+- [x] Wider content area (max-w-5xl) for better space efficiency
+- [x] Inline mood tracker alongside title (5 colored emoji buttons)
+- [x] Spell check enabled in TipTap editor
+- [x] AI Reflection panel below editor
+- [x] Removed unnecessary footer tips
+- [x] Better bottom padding for scroll comfort
+
+**Developer Experience**
+- [x] Dev login for local testing (Credentials provider)
+- [x] Local SQLite database separate from production
+- [x] Migration script to pull production entries locally
+
+---
+
+## Epic 7: Advanced AI (The Wisdom)
 
 ### Epic Statement
 *As a long-term journaler, I want my AI companion to grow with me—understanding my history, tracking my growth, and engaging in deeper dialogue, so that insights become increasingly valuable over time.*
@@ -290,28 +328,28 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 
 | ID | Story | Priority | Points |
 |----|-------|----------|--------|
-| E6-S1 | As a user, I want to ask follow-up questions about my AI insights | P2 | 8 |
-| E6-S2 | As a user, I want AI to automatically detect my mood from my writing | P2 | 5 |
-| E6-S3 | As a user, I want AI to notice and celebrate my growth over time | P2 | 5 |
-| E6-S4 | As a user, I want personalized prompts based on my themes and interests | P2 | 5 |
-| E6-S5 | As a user, I want gentle therapeutic questions to deepen reflection | P3 | 5 |
-| E6-S6 | As a user, I want to be notified if AI detects concerning patterns | P3 | 8 |
+| E7-S1 | As a user, I want to ask follow-up questions about my AI insights | P2 | 8 |
+| E7-S2 | As a user, I want AI to automatically detect my mood from my writing | P2 | 5 |
+| E7-S3 | As a user, I want AI to notice and celebrate my growth over time | P2 | 5 |
+| E7-S4 | As a user, I want personalized prompts based on my themes and interests | P2 | 5 |
+| E7-S5 | As a user, I want gentle therapeutic questions to deepen reflection | P3 | 5 |
+| E7-S6 | As a user, I want to be notified if AI detects concerning patterns | P3 | 8 |
 
 ### Acceptance Criteria
 
-**E6-S1: Conversational Insights**
+**E7-S1: Conversational Insights**
 - [ ] "Ask more" button on AI insight card
 - [ ] Maintains context of current entry
 - [ ] Remembers previous questions in session
 - [ ] Clear conversation history per entry
 
-**E6-S2: Sentiment Detection**
+**E7-S2: Sentiment Detection**
 - [ ] AI suggests mood based on entry content
 - [ ] User can accept or override
 - [ ] Accuracy target: 80%+ match with user selection
 - [ ] Never overrides explicit user choice
 
-**E6-S3: Growth Tracking**
+**E7-S3: Growth Tracking**
 - [ ] Quarterly "growth report" comparing themes/sentiment over time
 - [ ] Highlights positive changes
 - [ ] Gently notes recurring challenges
@@ -359,10 +397,16 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 - Epic 5: Cross-Platform (P1 stories)
 - Estimated duration: 6-8 weeks
 
-### Release 6.0 — Wise Companion
+### Release 6.0 — Polished Experience
+*A refined, delightful interface.*
+
+- Epic 6: UI/UX Polish
+- Status: ✅ Complete
+
+### Release 7.0 — Wise Companion
 *AI that grows with you.*
 
-- Epic 6: Advanced AI
+- Epic 7: Advanced AI
 - Estimated duration: 8-10 weeks
 
 ---
@@ -400,5 +444,5 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 
 *This epic storyline is a living document. Update as priorities shift and learnings emerge.*
 
-**Last Updated**: November 2024
+**Last Updated**: November 29, 2024
 **Owner**: Product Team
