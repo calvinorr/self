@@ -11,11 +11,17 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const allEntries = await db
-      .select()
-      .from(entries)
-      .where(eq(entries.userId, session.user.id))
-      .orderBy(desc(entries.createdAt));
+    // In development, show all entries regardless of user
+    // In production, filter by user ID
+    const isDev = process.env.NODE_ENV === "development";
+
+    const allEntries = isDev
+      ? await db.select().from(entries).orderBy(desc(entries.createdAt))
+      : await db
+          .select()
+          .from(entries)
+          .where(eq(entries.userId, session.user.id))
+          .orderBy(desc(entries.createdAt));
 
     return NextResponse.json(allEntries);
   } catch (error) {

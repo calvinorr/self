@@ -3,11 +3,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
-import { EntrySearch } from "@/components/entry-search";
-import { MoodTrendsChart } from "@/components/mood-trends-chart";
-import { AIThemes } from "@/components/ai-themes";
-import { PeriodSummary } from "@/components/period-summary";
-import Link from "next/link";
 
 interface Entry {
   id: number;
@@ -19,37 +14,33 @@ interface Entry {
   updatedAt: string;
 }
 
-interface MoodCount {
-  mood: string;
-  count: number;
-  percentage: number;
+interface AnalysisData {
+  summary: string;
+  emergingTheme: { title: string; description: string };
+  emotionalPattern: { title: string; description: string };
+  thoughtPattern: { title: string; description: string };
+  coreTopics: { name: string; color: string }[];
+  relevantExcerpts: { text: string; date: string; entryId: number }[];
 }
 
-const MOOD_CATEGORIES = {
-  positive: ["happy", "excited", "grateful", "hopeful", "calm"],
-  neutral: ["neutral", "tired"],
-  negative: ["anxious", "frustrated", "sad"],
-};
-
-const MOOD_COLORS: Record<string, string> = {
-  happy: "bg-emerald-500",
-  excited: "bg-amber-500",
-  grateful: "bg-pink-500",
-  hopeful: "bg-sky-500",
-  calm: "bg-teal-500",
-  neutral: "bg-slate-500",
-  tired: "bg-purple-500",
-  anxious: "bg-orange-500",
-  frustrated: "bg-red-500",
-  sad: "bg-blue-500",
-};
+const TOPIC_COLORS = [
+  { bg: "bg-blue-100 dark:bg-blue-900/50", text: "text-blue-800 dark:text-blue-300" },
+  { bg: "bg-green-100 dark:bg-green-900/50", text: "text-green-800 dark:text-green-300" },
+  { bg: "bg-yellow-100 dark:bg-yellow-900/50", text: "text-yellow-800 dark:text-yellow-300" },
+  { bg: "bg-purple-100 dark:bg-purple-900/50", text: "text-purple-800 dark:text-purple-300" },
+  { bg: "bg-red-100 dark:bg-red-900/50", text: "text-red-800 dark:text-red-300" },
+  { bg: "bg-indigo-100 dark:bg-indigo-900/50", text: "text-indigo-800 dark:text-indigo-300" },
+  { bg: "bg-pink-100 dark:bg-pink-900/50", text: "text-pink-800 dark:text-pink-300" },
+  { bg: "bg-teal-100 dark:bg-teal-900/50", text: "text-teal-800 dark:text-teal-300" },
+];
 
 export default function InsightsPage() {
   const router = useRouter();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState<"week" | "month" | "year" | "all">("month");
-  const [moodChartRange, setMoodChartRange] = useState<"week" | "month" | "quarter">("month");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
+  const [timeRange, setTimeRange] = useState<"week" | "month" | "all">("month");
 
   useEffect(() => {
     async function fetchEntries() {
@@ -80,154 +71,103 @@ export default function InsightsPage() {
         case "month":
           const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
           return entryDate >= monthAgo;
-        case "year":
-          const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-          return entryDate >= yearAgo;
         default:
           return true;
       }
     });
   }, [entries, timeRange]);
 
-  // Calculate mood statistics
-  const moodStats = useMemo(() => {
-    const counts: Record<string, number> = {};
-    filteredEntries.forEach((entry) => {
-      if (entry.mood) {
-        counts[entry.mood] = (counts[entry.mood] || 0) + 1;
+  // Generate AI analysis when entries change
+  useEffect(() => {
+    async function generateAnalysis() {
+      if (filteredEntries.length === 0) {
+        setAnalysisData(null);
+        return;
       }
-    });
 
-    const total = Object.values(counts).reduce((a, b) => a + b, 0);
-    const stats: MoodCount[] = Object.entries(counts)
-      .map(([mood, count]) => ({
-        mood,
-        count,
-        percentage: total > 0 ? Math.round((count / total) * 100) : 0,
-      }))
-      .sort((a, b) => b.count - a.count);
+      setIsAnalyzing(true);
+      try {
+        const response = await fetch("/api/insights/analysis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            entries: filteredEntries.map((e) => ({
+              id: e.id,
+              title: e.title,
+              content: e.content,
+              mood: e.mood,
+              createdAt: e.createdAt,
+            })),
+            timeRange,
+          }),
+        });
 
-    return stats;
-  }, [filteredEntries]);
-
-  // Calculate category percentages
-  const categoryStats = useMemo(() => {
-    let positive = 0, neutral = 0, negative = 0;
-    filteredEntries.forEach((entry) => {
-      if (!entry.mood) return;
-      if (MOOD_CATEGORIES.positive.includes(entry.mood)) positive++;
-      else if (MOOD_CATEGORIES.neutral.includes(entry.mood)) neutral++;
-      else if (MOOD_CATEGORIES.negative.includes(entry.mood)) negative++;
-    });
-    const total = positive + neutral + negative;
-    return {
-      positive: total > 0 ? Math.round((positive / total) * 100) : 0,
-      neutral: total > 0 ? Math.round((neutral / total) * 100) : 0,
-      negative: total > 0 ? Math.round((negative / total) * 100) : 0,
-    };
-  }, [filteredEntries]);
-
-  // Calculate writing streak
-  const writingStreak = useMemo(() => {
-    if (entries.length === 0) return 0;
-
-    const sortedDates = entries
-      .map((e) => new Date(e.createdAt).toDateString())
-      .filter((v, i, a) => a.indexOf(v) === i)
-      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-
-    let streak = 0;
-    const today = new Date().toDateString();
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
-
-    if (sortedDates[0] !== today && sortedDates[0] !== yesterday) {
-      return 0;
-    }
-
-    for (let i = 0; i < sortedDates.length; i++) {
-      const current = new Date(sortedDates[i]);
-      const expected = new Date(Date.now() - i * 86400000);
-
-      if (current.toDateString() === expected.toDateString()) {
-        streak++;
-      } else if (i === 0 && sortedDates[0] === yesterday) {
-        streak++;
-      } else {
-        break;
+        if (response.ok) {
+          const data = await response.json();
+          setAnalysisData(data);
+        }
+      } catch (error) {
+        console.error("Failed to generate analysis:", error);
+      } finally {
+        setIsAnalyzing(false);
       }
     }
 
-    return streak;
-  }, [entries]);
-
-  // Activity heatmap data (last 12 weeks)
-  const activityData = useMemo(() => {
-    const weeks: { week: number; days: number[] }[] = [];
-    const now = new Date();
-
-    for (let w = 11; w >= 0; w--) {
-      const weekStart = new Date(now.getTime() - w * 7 * 24 * 60 * 60 * 1000);
-      const days: number[] = [];
-
-      for (let d = 0; d < 7; d++) {
-        const day = new Date(weekStart.getTime() + d * 24 * 60 * 60 * 1000);
-        const count = entries.filter(
-          (e) => new Date(e.createdAt).toDateString() === day.toDateString()
-        ).length;
-        days.push(count);
-      }
-
-      weeks.push({ week: 12 - w, days });
-    }
-
-    return weeks;
-  }, [entries]);
-
-  const entriesWithInsights = filteredEntries.filter((e) => e.aiInsight).length;
+    generateAnalysis();
+  }, [filteredEntries, timeRange]);
 
   const handleEntryClick = (entryId: number) => {
     router.push(`/entry/${entryId}`);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
+
+  const getTimeRangeLabel = () => {
+    switch (timeRange) {
+      case "week":
+        return "This Week's";
+      case "month":
+        return "This Month's";
+      default:
+        return "All Time";
+    }
   };
 
   return (
     <div className="flex h-screen w-full">
       <Sidebar />
       <main className="flex-1 overflow-y-auto bg-background scrollbar-thin">
-        <div className="p-8">
+        <div className="max-w-5xl mx-auto p-8 space-y-8">
           {/* Header */}
-          <header className="mb-8 animate-fade-up opacity-0" style={{ animationFillMode: "forwards" }}>
-            <div className="flex items-center justify-between gap-4 flex-wrap">
+          <header className="animate-fade-up opacity-0" style={{ animationFillMode: "forwards" }}>
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
-                  Insights
+                  AI Insights & Analysis
                 </h1>
                 <p className="mt-1 text-base text-muted-foreground">
-                  Discover patterns in your journaling journey.
+                  An overview of your recent thoughts and feelings.
                 </p>
               </div>
 
-              <div className="flex items-center gap-4">
-                {/* Search */}
-                <div className="w-64">
-                  <EntrySearch entries={entries} />
-                </div>
-
-                {/* Time Range Toggle */}
-                <div className="flex h-10 items-center rounded-lg bg-surface p-1">
-                  {(["week", "month", "year", "all"] as const).map((range) => (
-                    <button
-                      key={range}
-                      onClick={() => setTimeRange(range)}
-                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize ${
-                        timeRange === range
-                          ? "bg-background text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {range === "all" ? "All time" : `This ${range}`}
-                    </button>
-                  ))}
-                </div>
+              {/* Time Range Toggle */}
+              <div className="flex gap-2">
+                {(["week", "month", "all"] as const).map((range) => (
+                  <button
+                    key={range}
+                    onClick={() => setTimeRange(range)}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      timeRange === range
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-surface border border-border text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
+                    }`}
+                  >
+                    {range === "week" ? "Last 7 Days" : range === "month" ? "Last 30 Days" : "All Time"}
+                  </button>
+                ))}
               </div>
             </div>
           </header>
@@ -242,7 +182,7 @@ export default function InsightsPage() {
             <div className="rounded-xl border border-border bg-surface py-16 text-center animate-fade-up">
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-surface-elevated">
                 <span className="material-symbols-outlined text-4xl text-muted-foreground">
-                  insights
+                  psychology
                 </span>
               </div>
               <h3 className="mt-4 text-lg font-semibold text-foreground">
@@ -251,203 +191,169 @@ export default function InsightsPage() {
               <p className="mt-1 text-sm text-muted-foreground">
                 Start journaling to see patterns emerge
               </p>
-              <Link
-                href="/entry/new"
+              <button
+                onClick={() => router.push("/entry/new")}
                 className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 <span className="material-symbols-outlined text-lg">add</span>
                 Write your first entry
-              </Link>
+              </button>
             </div>
-          ) : (
+          ) : isAnalyzing ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <span className="material-symbols-outlined text-4xl text-primary animate-pulse">
+                psychology
+              </span>
+              <p className="text-muted-foreground">Analyzing your journal entries...</p>
+            </div>
+          ) : analysisData ? (
             <>
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                {[
-                  {
-                    label: "Total Entries",
-                    value: filteredEntries.length,
-                    icon: "book_4",
-                    color: "text-primary",
-                  },
-                  {
-                    label: "Writing Streak",
-                    value: `${writingStreak} days`,
-                    icon: "local_fire_department",
-                    color: "text-orange-500",
-                  },
-                  {
-                    label: "AI Insights",
-                    value: entriesWithInsights,
-                    icon: "psychology",
-                    color: "text-purple-500",
-                  },
-                  {
-                    label: "Top Mood",
-                    value: moodStats[0]?.mood || "—",
-                    icon: "mood",
-                    color: "text-emerald-500",
-                    capitalize: true,
-                  },
-                ].map((stat, index) => (
-                  <div
-                    key={stat.label}
-                    className="rounded-xl border border-border bg-surface p-5 animate-fade-up opacity-0"
-                    style={{ animationDelay: `${0.1 + index * 0.05}s`, animationFillMode: "forwards" }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        {stat.label}
-                      </span>
-                      <span className={`material-symbols-outlined text-xl ${stat.color}`}>
-                        {stat.icon}
-                      </span>
-                    </div>
-                    <p className={`mt-2 text-2xl font-bold text-foreground ${stat.capitalize ? "capitalize" : ""}`}>
-                      {stat.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Mood Trends Chart - NEW */}
+              {/* AI Summary Card */}
               <div
-                className="rounded-xl border border-border bg-surface p-6 mb-8 animate-fade-up opacity-0"
-                style={{ animationDelay: "0.25s", animationFillMode: "forwards" }}
+                className="rounded-xl border border-border bg-surface p-6 animate-fade-up opacity-0"
+                style={{ animationDelay: "0.1s", animationFillMode: "forwards" }}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-foreground">Mood Trends</h2>
-                  <div className="flex h-9 items-center rounded-lg bg-surface-elevated p-1">
-                    {(["week", "month", "quarter"] as const).map((range) => (
-                      <button
-                        key={range}
-                        onClick={() => setMoodChartRange(range)}
-                        className={`px-3 py-1 text-sm font-medium rounded-md transition-colors capitalize ${
-                          moodChartRange === range
-                            ? "bg-background text-foreground"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {range === "quarter" ? "90 days" : range === "month" ? "30 days" : "7 days"}
-                      </button>
-                    ))}
-                  </div>
+                <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
+                  <span
+                    className="material-symbols-outlined text-primary text-2xl"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    spark
+                  </span>
+                  <span>{getTimeRangeLabel()} Summary</span>
+                </h2>
+                <p className="text-muted-foreground mt-2 mb-4">
+                  A high-level overview of your emotional landscape based on your journal entries from the past{" "}
+                  {timeRange === "week" ? "7" : timeRange === "month" ? "30" : ""} days.
+                </p>
+                <div className="prose prose-sm max-w-none text-foreground">
+                  <p className="whitespace-pre-line leading-relaxed">{analysisData.summary}</p>
                 </div>
-                <MoodTrendsChart
-                  entries={entries}
-                  timeRange={moodChartRange}
-                  onEntryClick={handleEntryClick}
-                />
               </div>
 
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
-                {/* Mood Distribution */}
+              {/* Three Insight Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div
-                  className="rounded-xl border border-border bg-surface p-6 animate-fade-up opacity-0"
+                  className="flex flex-col gap-2 rounded-xl bg-surface p-5 border border-border animate-fade-up opacity-0"
+                  style={{ animationDelay: "0.15s", animationFillMode: "forwards" }}
+                >
+                  <p className="text-sm font-medium text-muted-foreground">Emerging Theme</p>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {analysisData.emergingTheme.title}
+                  </h3>
+                  <p className="text-sm text-foreground mt-1">
+                    {analysisData.emergingTheme.description}
+                  </p>
+                </div>
+
+                <div
+                  className="flex flex-col gap-2 rounded-xl bg-surface p-5 border border-border animate-fade-up opacity-0"
+                  style={{ animationDelay: "0.2s", animationFillMode: "forwards" }}
+                >
+                  <p className="text-sm font-medium text-muted-foreground">Emotional Pattern</p>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {analysisData.emotionalPattern.title}
+                  </h3>
+                  <p className="text-sm text-foreground mt-1">
+                    {analysisData.emotionalPattern.description}
+                  </p>
+                </div>
+
+                <div
+                  className="flex flex-col gap-2 rounded-xl bg-surface p-5 border border-border animate-fade-up opacity-0"
+                  style={{ animationDelay: "0.25s", animationFillMode: "forwards" }}
+                >
+                  <p className="text-sm font-medium text-muted-foreground">Thought Pattern</p>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {analysisData.thoughtPattern.title}
+                  </h3>
+                  <p className="text-sm text-foreground mt-1">
+                    {analysisData.thoughtPattern.description}
+                  </p>
+                </div>
+              </div>
+
+              {/* Core Topics & Relevant Excerpts */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Core Topics */}
+                <div
+                  className="lg:col-span-1 bg-surface p-6 rounded-xl border border-border animate-fade-up opacity-0"
                   style={{ animationDelay: "0.3s", animationFillMode: "forwards" }}
                 >
-                  <h2 className="text-lg font-semibold text-foreground mb-4">
-                    Mood Distribution
-                  </h2>
-
-                  {/* Category Summary */}
-                  <div className="flex gap-4 mb-6">
-                    <div className="flex-1 rounded-lg bg-emerald-500/10 p-3 text-center">
-                      <p className="text-2xl font-bold text-emerald-500">{categoryStats.positive}%</p>
-                      <p className="text-xs text-muted-foreground">Positive</p>
-                    </div>
-                    <div className="flex-1 rounded-lg bg-slate-500/10 p-3 text-center">
-                      <p className="text-2xl font-bold text-slate-400">{categoryStats.neutral}%</p>
-                      <p className="text-xs text-muted-foreground">Neutral</p>
-                    </div>
-                    <div className="flex-1 rounded-lg bg-rose-500/10 p-3 text-center">
-                      <p className="text-2xl font-bold text-rose-500">{categoryStats.negative}%</p>
-                      <p className="text-xs text-muted-foreground">Challenging</p>
-                    </div>
+                  <h3 className="text-lg font-bold text-foreground">Core Topics</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Words and concepts that appeared most often in your writing.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {analysisData.coreTopics.map((topic, index) => {
+                      const colorSet = TOPIC_COLORS[index % TOPIC_COLORS.length];
+                      return (
+                        <span
+                          key={topic.name}
+                          className={`px-3 py-1 text-sm font-medium rounded-full ${colorSet.bg} ${colorSet.text}`}
+                        >
+                          {topic.name}
+                        </span>
+                      );
+                    })}
                   </div>
+                </div>
 
-                  {/* Individual Moods */}
-                  <div className="space-y-3">
-                    {moodStats.slice(0, 6).map((stat) => (
-                      <div key={stat.mood} className="flex items-center gap-3">
-                        <span className="w-20 text-sm capitalize text-muted-foreground">
-                          {stat.mood}
-                        </span>
-                        <div className="flex-1 h-2 rounded-full bg-surface-elevated overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${MOOD_COLORS[stat.mood] || "bg-primary"} transition-all duration-500`}
-                            style={{ width: `${stat.percentage}%` }}
-                          />
-                        </div>
-                        <span className="w-12 text-right text-sm font-medium text-foreground">
-                          {stat.percentage}%
-                        </span>
+                {/* Relevant Excerpts */}
+                <div
+                  className="lg:col-span-2 bg-surface p-6 rounded-xl border border-border animate-fade-up opacity-0"
+                  style={{ animationDelay: "0.35s", animationFillMode: "forwards" }}
+                >
+                  <h3 className="text-lg font-bold text-foreground">Relevant Excerpts</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Snippets from your journal that highlight these insights.
+                  </p>
+                  <div className="space-y-4">
+                    {analysisData.relevantExcerpts.map((excerpt, index) => (
+                      <div
+                        key={index}
+                        className="p-4 rounded-lg bg-background border border-border"
+                      >
+                        <p className="text-sm italic text-muted-foreground">
+                          "{excerpt.text}"
+                        </p>
+                        <button
+                          onClick={() => handleEntryClick(excerpt.entryId)}
+                          className="text-xs font-semibold text-primary mt-2 block hover:underline"
+                        >
+                          See Entry from {formatDate(excerpt.date)}
+                        </button>
                       </div>
                     ))}
                   </div>
                 </div>
-
-                {/* Weekly/Monthly Summary - NEW */}
-                <div
-                  className="animate-fade-up opacity-0"
-                  style={{ animationDelay: "0.35s", animationFillMode: "forwards" }}
-                >
-                  <PeriodSummary entries={entries} />
-                </div>
               </div>
 
-              {/* AI Themes - NEW */}
+              {/* Privacy Footer */}
               <div
-                className="mb-8 animate-fade-up opacity-0"
+                className="text-center py-4 animate-fade-up opacity-0"
                 style={{ animationDelay: "0.4s", animationFillMode: "forwards" }}
               >
-                <AIThemes entries={entries} />
-              </div>
-
-              {/* Activity Heatmap */}
-              <div
-                className="rounded-xl border border-border bg-surface p-6 animate-fade-up opacity-0"
-                style={{ animationDelay: "0.45s", animationFillMode: "forwards" }}
-              >
-                <h2 className="text-lg font-semibold text-foreground mb-4">
-                  Writing Activity
-                </h2>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Last 12 weeks
+                <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                  <span className="material-symbols-outlined text-sm">lock</span>
+                  Your journal is private and your data is protected.
                 </p>
-                <div className="flex gap-1">
-                  {activityData.map((week, weekIndex) => (
-                    <div key={weekIndex} className="flex flex-col gap-1">
-                      {week.days.map((count, dayIndex) => (
-                        <div
-                          key={dayIndex}
-                          className={`h-4 w-4 rounded-sm transition-colors ${
-                            count === 0
-                              ? "bg-surface-elevated"
-                              : count === 1
-                              ? "bg-primary/30"
-                              : count === 2
-                              ? "bg-primary/60"
-                              : "bg-primary"
-                          }`}
-                          title={`${count} ${count === 1 ? "entry" : "entries"}`}
-                        />
-                      ))}
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-3 flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                  <span>Less</span>
-                  <div className="flex gap-1">
-                    <div className="h-3 w-3 rounded-sm bg-surface-elevated" />
-                    <div className="h-3 w-3 rounded-sm bg-primary/30" />
-                    <div className="h-3 w-3 rounded-sm bg-primary/60" />
-                    <div className="h-3 w-3 rounded-sm bg-primary" />
-                  </div>
-                  <span>More</span>
-                </div>
               </div>
             </>
+          ) : (
+            <div className="rounded-xl border border-border bg-surface py-16 text-center animate-fade-up">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-surface-elevated">
+                <span className="material-symbols-outlined text-4xl text-muted-foreground">
+                  psychology
+                </span>
+              </div>
+              <h3 className="mt-4 text-lg font-semibold text-foreground">
+                No entries in this time period
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Try selecting a different time range or add more entries
+              </p>
+            </div>
           )}
         </div>
       </main>

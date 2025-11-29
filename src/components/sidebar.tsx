@@ -78,22 +78,8 @@ export function Sidebar({ user: propUser }: SidebarProps = {}) {
     <aside className="flex h-screen w-64 flex-col border-r border-border bg-surface p-4">
       {/* Logo */}
       <div className="flex items-center gap-3 px-3 py-3">
-        <div className="flex h-8 w-8 items-center justify-center text-primary">
-          <svg
-            viewBox="0 0 48 48"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8"
-          >
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M47.2426 24L24 47.2426L0.757355 24L24 0.757355L47.2426 24ZM12.2426 21H35.7574L24 9.24264L12.2426 21Z"
-              fill="currentColor"
-            />
-          </svg>
-        </div>
-        <h1 className="text-lg font-bold text-foreground">Self Journal</h1>
+        <span className="material-symbols-outlined text-primary text-3xl">psychology</span>
+        <h1 className="text-lg font-bold text-foreground">MindScribe AI</h1>
       </div>
 
       {/* Main Navigation */}

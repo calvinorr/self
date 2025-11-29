@@ -18,13 +18,18 @@ function getGreeting(): string {
 
 export default async function HomePage() {
   const session = await auth();
+  const isDev = process.env.NODE_ENV === "development";
 
+  // In development, show all entries regardless of user
+  // In production, filter by user ID
   const allEntries = session?.user?.id
-    ? await db
-        .select()
-        .from(entries)
-        .where(eq(entries.userId, session.user.id))
-        .orderBy(desc(entries.createdAt))
+    ? isDev
+      ? await db.select().from(entries).orderBy(desc(entries.createdAt))
+      : await db
+          .select()
+          .from(entries)
+          .where(eq(entries.userId, session.user.id))
+          .orderBy(desc(entries.createdAt))
     : [];
 
   return (

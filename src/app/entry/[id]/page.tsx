@@ -5,11 +5,19 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sidebar } from "@/components/sidebar";
 import { Editor } from "@/components/editor";
-import { MoodSelect } from "@/components/mood-select";
-import { AIInsight } from "@/components/ai-insight";
 import { useAutosave } from "@/hooks/use-autosave";
 import { SaveStatusIndicator } from "@/components/save-status";
+import { cn } from "@/lib/utils";
 import type { Entry } from "@/db/schema";
+
+// Mood options with distinct colors always visible
+const moods = [
+  { value: "great", icon: "sentiment_very_satisfied", label: "Great", color: "text-emerald-400", bg: "bg-emerald-400/15 border-emerald-400/40 hover:bg-emerald-400/25" },
+  { value: "good", icon: "sentiment_satisfied", label: "Good", color: "text-sky-400", bg: "bg-sky-400/15 border-sky-400/40 hover:bg-sky-400/25" },
+  { value: "okay", icon: "sentiment_neutral", label: "Okay", color: "text-amber-400", bg: "bg-amber-400/15 border-amber-400/40 hover:bg-amber-400/25" },
+  { value: "low", icon: "sentiment_dissatisfied", label: "Low", color: "text-orange-400", bg: "bg-orange-400/15 border-orange-400/40 hover:bg-orange-400/25" },
+  { value: "rough", icon: "sentiment_sad", label: "Rough", color: "text-rose-400", bg: "bg-rose-400/15 border-rose-400/40 hover:bg-rose-400/25" },
+];
 
 export default function EntryPage({
   params,
@@ -23,6 +31,7 @@ export default function EntryPage({
   const [content, setContent] = useState("");
   const [mood, setMood] = useState<string | null>(null);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -116,11 +125,37 @@ export default function EntryPage({
     }
   };
 
+  const handleAnalyze = async () => {
+    if (!content.trim()) return;
+
+    setIsAnalyzing(true);
+    const stripHtml = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content: stripHtml(content) }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setAiInsight(data.text);
+      }
+    } catch (err) {
+      console.error("AI Analysis error:", err);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const wordCount = content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().split(/\s+/).filter(Boolean).length;
+
   if (isLoading) {
     return (
       <div className="flex h-screen w-full">
         <Sidebar />
-        <main className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center bg-background">
           <div className="flex items-center gap-3 text-muted-foreground">
             <span className="material-symbols-outlined text-2xl animate-spin">progress_activity</span>
             <span>Loading entry...</span>
@@ -134,7 +169,7 @@ export default function EntryPage({
     return (
       <div className="flex h-screen w-full">
         <Sidebar />
-        <main className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center bg-background">
           <div className="text-center">
             <div className="mx-auto w-16 h-16 rounded-full bg-surface flex items-center justify-center mb-4">
               <span className="material-symbols-outlined text-3xl text-muted-foreground">error</span>
@@ -154,95 +189,172 @@ export default function EntryPage({
     );
   }
 
+  const createdDate = new Date(entry.createdAt).toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   return (
     <div className="flex h-screen w-full">
       <Sidebar />
 
-      <main className="flex-1 overflow-y-auto scrollbar-thin">
+      <main className="flex-1 flex flex-col overflow-hidden bg-background">
         {/* Header */}
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-8 py-4">
-          <div className="flex items-center gap-4">
+        <header className="shrink-0 flex items-center justify-between border-b border-border bg-surface/50 backdrop-blur-sm px-6 py-3">
+          <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors"
             >
               <span className="material-symbols-outlined text-xl">arrow_back</span>
             </Link>
-            <h1 className="text-xl font-semibold text-foreground">Edit Entry</h1>
+            <div className="h-5 w-px bg-border" />
             <SaveStatusIndicator status={status} lastSaved={lastSaved} />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {wordCount} {wordCount === 1 ? "word" : "words"}
+            </span>
             <button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
+              title="Delete entry"
             >
               {isDeleting ? (
-                <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>
               ) : (
-                <span className="material-symbols-outlined text-lg">delete</span>
+                <span className="material-symbols-outlined text-base">delete</span>
               )}
             </button>
             <button
               onClick={handleSave}
               disabled={!title.trim() || !content.trim() || isSaving}
-              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? (
                 <>
-                  <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                  <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>
                   Saving...
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-lg">save</span>
-                  Save Changes
+                  <span className="material-symbols-outlined text-base">check</span>
+                  Done
                 </>
               )}
             </button>
           </div>
         </header>
 
-        {/* Content */}
-        <div className="max-w-4xl mx-auto p-8">
-          <div className="space-y-6 animate-fade-up opacity-0" style={{ animationFillMode: "forwards" }}>
-            {/* Title & Content Card */}
-            <div className="rounded-lg border border-border bg-surface p-6">
+        {/* Main Writing Area - Full Width */}
+        <div className="flex-1 overflow-y-auto scrollbar-thin">
+          <div className="max-w-5xl mx-auto px-8 pt-8 pb-16">
+            {/* Date Badge */}
+            <span className="text-xs text-muted-foreground mb-4 block">{createdDate}</span>
+
+            {/* Title Row with Mood */}
+            <div className="flex items-start gap-6 mb-4">
               <input
                 type="text"
                 placeholder="Entry title..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-transparent text-2xl font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none"
+                className="flex-1 bg-transparent text-2xl font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none"
               />
-              <div className="mt-4 border-t border-border pt-4">
-                <Editor
-                  content={content}
-                  onChange={setContent}
-                  placeholder="What's on your mind today?"
-                />
+
+              {/* Mood Tracker - Compact inline */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {moods.map((m) => (
+                  <button
+                    key={m.value}
+                    onClick={() => setMood(mood === m.value ? null : m.value)}
+                    className={cn(
+                      "flex items-center justify-center w-9 h-9 rounded-lg border transition-all duration-200",
+                      mood === m.value
+                        ? `${m.bg} ${m.color} border-current`
+                        : `border-transparent hover:border-border hover:bg-surface-elevated/50`
+                    )}
+                    title={m.label}
+                  >
+                    <span
+                      className={cn("material-symbols-outlined text-xl", m.color)}
+                      style={{ fontVariationSettings: mood === m.value ? "'FILL' 1, 'wght' 500" : "'FILL' 0, 'wght' 400" }}
+                    >
+                      {m.icon}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Mood Card */}
-            <div className="rounded-lg border border-border bg-surface p-6 animate-fade-up opacity-0 stagger-1" style={{ animationFillMode: "forwards" }}>
-              <h3 className="text-sm font-medium text-foreground mb-4">
-                How are you feeling?
-              </h3>
-              <MoodSelect value={mood} onChange={setMood} />
+            {/* Editor - Larger */}
+            <div className="min-h-[300px]">
+              <Editor
+                content={content}
+                onChange={setContent}
+                placeholder="What's on your mind?"
+                className="min-h-[300px]"
+              />
             </div>
 
-            {/* AI Insight */}
-            {content.trim() && (
-              <div className="animate-fade-up opacity-0 stagger-2" style={{ animationFillMode: "forwards" }}>
-                <AIInsight
-                  title={title}
-                  content={content}
-                  existingInsight={aiInsight}
-                  onInsightGenerated={setAiInsight}
-                />
+            {/* AI Reflection Panel */}
+            <div className="mt-8">
+              <div className="rounded-xl border border-border bg-surface/50 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="material-symbols-outlined text-xl text-primary"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      psychology
+                    </span>
+                    <p className="text-sm font-medium text-foreground">
+                      AI Reflection
+                    </p>
+                  </div>
+                  {!isAnalyzing && (
+                    <button
+                      onClick={handleAnalyze}
+                      disabled={!content.trim()}
+                      className="flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/20 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <span
+                        className="material-symbols-outlined text-base"
+                        style={{ fontVariationSettings: "'FILL' 1" }}
+                      >
+                        auto_awesome
+                      </span>
+                      {aiInsight ? "Regenerate" : "Generate Insight"}
+                    </button>
+                  )}
+                </div>
+
+                {!aiInsight && !isAnalyzing && (
+                  <p className="text-sm text-muted-foreground">
+                    Get AI-powered reflections on your writing to gain deeper insights into your thoughts.
+                  </p>
+                )}
+
+                {isAnalyzing && (
+                  <div className="flex items-center gap-3 text-muted-foreground py-4">
+                    <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                    <span className="text-sm">Analyzing your thoughts...</span>
+                  </div>
+                )}
+
+                {aiInsight && !isAnalyzing && (
+                  <div className="rounded-lg bg-primary/5 border border-primary/10 p-4">
+                    <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                      {aiInsight}
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
+
+            </div>
           </div>
         </div>
       </main>
