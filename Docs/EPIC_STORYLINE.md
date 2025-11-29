@@ -34,7 +34,7 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 | E2 | Enhanced Writing | ✅ Complete | M |
 | E3 | Insight & Discovery | ✅ Complete | L |
 | E4 | Privacy & Security | ✅ Complete (Auth) | M |
-| E5 | Cross-Platform | Skipped (using Vercel) | XL |
+| E5 | Deployment | ✅ Complete | M |
 | E6 | Advanced AI | Planned | L |
 
 ---
@@ -213,25 +213,37 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 
 ---
 
-## Epic 5: Cross-Platform (The Expansion)
+## Epic 5: Deployment (Going Live)
 
 ### Epic Statement
-*As a user who lives across devices, I want to journal from anywhere and have my entries sync seamlessly, so that reflection fits into my life wherever I am.*
+*As a user, I want to access my journal from anywhere with a real URL, so that I can journal from any device with my data persisted in the cloud.*
 
-### Business Value
-- Mobile is primary journaling context for many users
-- Sync drives multi-device engagement
-- PWA provides app-like experience without app store friction
+### Status: ✅ Complete
 
-### User Stories
+### What Was Implemented
+- **Vercel Deployment** - Auto-deploys from GitHub main branch
+- **Turso Database** - Production SQLite database (EU West region)
+- **GitHub OAuth** - Production authentication configured
+- **Data Migration** - Local entries migrated to production
 
-| ID | Story | Priority | Points |
+### Production URLs
+- **App**: https://self-phi-two.vercel.app
+- **Database**: libsql://journal-calvinorr.aws-eu-west-1.turso.io
+
+### Environment Variables (Vercel)
+- `DATABASE_URL` - Turso connection string
+- `DATABASE_AUTH_TOKEN` - Turso auth token
+- `AUTH_SECRET` - NextAuth secret
+- `AUTH_GITHUB_ID` - GitHub OAuth client ID
+- `AUTH_GITHUB_SECRET` - GitHub OAuth client secret
+- `AUTH_TRUST_HOST` - Required for Vercel
+- `GOOGLE_GENERATIVE_AI_API_KEY` - Gemini API key
+
+### Future Cross-Platform Considerations
+| ID | Story | Priority | Status |
 |----|-------|----------|--------|
-| E5-S1 | As a mobile user, I want to install the app on my home screen (PWA) | P1 | 5 |
-| E5-S2 | As a user without internet, I want to write entries offline | P1 | 8 |
-| E5-S3 | As a multi-device user, I want my entries to sync across all devices | P2 | 13 |
-| E5-S4 | As an iOS user, I want a native app for the best mobile experience | P3 | 21 |
-| E5-S5 | As an Android user, I want a native app for the best mobile experience | P3 | 21 |
+| E5-S1 | PWA for mobile home screen | P2 | Planned |
+| E5-S2 | Offline support | P3 | Planned |
 
 ### Acceptance Criteria
 
