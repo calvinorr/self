@@ -1,6 +1,7 @@
 import { signIn } from "@/auth";
 
-const isDev = process.env.NODE_ENV === "development";
+// Show dev login in development OR Vercel preview deployments
+const isDevOrPreview = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "preview";
 
 export default function LoginPage() {
   return (
@@ -77,8 +78,8 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {/* Dev Login - Only shown in development */}
-            {isDev && (
+            {/* Dev Login - Shown in development and Vercel preview */}
+            {isDevOrPreview && (
               <>
                 <div className="relative my-4">
                   <div className="absolute inset-0 flex items-center">
@@ -99,7 +100,7 @@ export default function LoginPage() {
                     className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-dashed border-orange-500/50 bg-orange-500/10 px-4 py-3 text-sm font-semibold text-orange-500 transition-all hover:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-background"
                   >
                     <span className="material-symbols-outlined text-xl">developer_mode</span>
-                    Dev Login (Local Only)
+                    Dev Login (Preview/Local)
                   </button>
                 </form>
               </>
