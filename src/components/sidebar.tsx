@@ -17,6 +17,7 @@ const mainNav: NavItem[] = [
   { href: "/", label: "Dashboard", icon: "grid_view" },
   { href: "/entries", label: "All Entries", icon: "book_4" },
   { href: "/insights", label: "Insights", icon: "lightbulb" },
+  { href: "/growth", label: "Growth", icon: "trending_up" },
   { href: "/calendar", label: "Calendar", icon: "calendar_month" },
 ];
 
