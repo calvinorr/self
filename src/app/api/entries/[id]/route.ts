@@ -15,15 +15,23 @@ export async function GET(
     }
 
     const { id } = await params;
-    const [entry] = await db
-      .select()
-      .from(entries)
-      .where(
-        and(
-          eq(entries.id, parseInt(id)),
-          eq(entries.userId, session.user.id)
-        )
-      );
+    const isDev = process.env.NODE_ENV === "development";
+
+    // In development, skip userId check to allow viewing any entry
+    const [entry] = isDev
+      ? await db
+          .select()
+          .from(entries)
+          .where(eq(entries.id, parseInt(id)))
+      : await db
+          .select()
+          .from(entries)
+          .where(
+            and(
+              eq(entries.id, parseInt(id)),
+              eq(entries.userId, session.user.id)
+            )
+          );
 
     if (!entry) {
       return NextResponse.json({ error: "Entry not found" }, { status: 404 });
@@ -52,23 +60,37 @@ export async function PUT(
     const { id } = await params;
     const body = await req.json();
     const { title, content, mood, aiInsight } = body;
+    const isDev = process.env.NODE_ENV === "development";
 
-    const [updatedEntry] = await db
-      .update(entries)
-      .set({
-        title,
-        content,
-        mood,
-        aiInsight,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(entries.id, parseInt(id)),
-          eq(entries.userId, session.user.id)
-        )
-      )
-      .returning();
+    // In development, skip userId check
+    const [updatedEntry] = isDev
+      ? await db
+          .update(entries)
+          .set({
+            title,
+            content,
+            mood,
+            aiInsight,
+            updatedAt: new Date(),
+          })
+          .where(eq(entries.id, parseInt(id)))
+          .returning()
+      : await db
+          .update(entries)
+          .set({
+            title,
+            content,
+            mood,
+            aiInsight,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(entries.id, parseInt(id)),
+              eq(entries.userId, session.user.id)
+            )
+          )
+          .returning();
 
     if (!updatedEntry) {
       return NextResponse.json({ error: "Entry not found" }, { status: 404 });
@@ -95,15 +117,23 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const [deletedEntry] = await db
-      .delete(entries)
-      .where(
-        and(
-          eq(entries.id, parseInt(id)),
-          eq(entries.userId, session.user.id)
-        )
-      )
-      .returning();
+    const isDev = process.env.NODE_ENV === "development";
+
+    // In development, skip userId check
+    const [deletedEntry] = isDev
+      ? await db
+          .delete(entries)
+          .where(eq(entries.id, parseInt(id)))
+          .returning()
+      : await db
+          .delete(entries)
+          .where(
+            and(
+              eq(entries.id, parseInt(id)),
+              eq(entries.userId, session.user.id)
+            )
+          )
+          .returning();
 
     if (!deletedEntry) {
       return NextResponse.json({ error: "Entry not found" }, { status: 404 });

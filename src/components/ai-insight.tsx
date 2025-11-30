@@ -29,6 +29,7 @@ export function AIInsight({
   const [messages, setMessages] = useState<Message[]>([]);
   const [question, setQuestion] = useState("");
   const [isConversing, setIsConversing] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -131,6 +132,48 @@ export function AIInsight({
     setQuestion("");
   };
 
+  const handleSaveInsights = async () => {
+    if (messages.length < 2 || isSummarizing) return;
+
+    setError(null);
+    setIsSummarizing(true);
+
+    try {
+      const response = await fetch("/api/analyze/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          content: stripHtml(content),
+          insight,
+          messages,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to save insights");
+      }
+
+      // Update insight with enriched version
+      setInsight(data.text);
+      onInsightGenerated(data.text);
+      // Clear conversation after saving
+      setMessages([]);
+      setShowConversation(false);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "An error occurred";
+      setError(message);
+      console.error("Save insights error:", err);
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
+  // Check if we have enough exchanges to offer save
+  const canSaveInsights = messages.length >= 2;
+
   const displayText = insight;
 
   // No insight yet - show generate button
@@ -188,13 +231,42 @@ export function AIInsight({
           <h3 className="font-semibold text-foreground">AI Insight</h3>
         </div>
         <div className="flex items-center gap-1">
-          {messages.length > 0 && (
+          {canSaveInsights && (
+            <button
+              onClick={handleSaveInsights}
+              disabled={isSummarizing}
+              className="flex items-center gap-1.5 rounded-lg bg-primary/10 border border-primary/20 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+              title="Save conversation insights to entry"
+            >
+              {isSummarizing ? (
+                <>
+                  <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-base">save</span>
+                  Save insights
+                </>
+              )}
+            </button>
+          )}
+          {messages.length > 0 && !canSaveInsights && (
             <button
               onClick={handleClearConversation}
               className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors"
               title="Clear conversation"
             >
               <span className="material-symbols-outlined text-lg">delete_sweep</span>
+            </button>
+          )}
+          {messages.length > 0 && canSaveInsights && (
+            <button
+              onClick={handleClearConversation}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors"
+              title="Discard conversation"
+            >
+              <span className="material-symbols-outlined text-lg">close</span>
             </button>
           )}
           {!isLoading && (

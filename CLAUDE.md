@@ -30,9 +30,36 @@ Project follows the epic storyline in `Docs/EPIC_STORYLINE.md`:
 - Epic 1: Foundation ✅
 - Epic 2: Enhanced Writing ✅
 - Epic 3: Insight & Discovery ✅
-- Epic 4: Privacy & Security (next)
-- Epic 5: Cross-Platform
-- Epic 6: Advanced AI
+- Epic 4: Privacy & Security ✅
+- Epic 5: Deployment ✅
+- Epic 6: UI/UX Polish ✅
+- Epic 7: Advanced AI (current)
+
+## Git & Deployment Workflow
+
+### Branch Strategy
+- `main` - Production branch, auto-deploys to Vercel production
+- `claude/*` or `epic/*` - Feature branches, trigger Vercel preview builds
+
+### Development Workflow
+1. **Create feature branch** from main (or use Claude Code worktree)
+2. **Develop & test locally** at `localhost:3000`
+3. **Commit & push** to trigger Vercel preview build
+4. **Test on Preview URL** - Uses dev login (OAuth won't work on dynamic URLs)
+5. **Create PR** to main when ready
+6. **Merge** - Auto-deploys to production
+
+### Worktree Notes
+- Git worktrees share `.git` but NOT ignored files
+- Copy `.env.local` from main repo to each worktree:
+  ```bash
+  cp /Users/calvinorr/Dev/Projects/Self/journal/.env.local .
+  ```
+
+### Authentication
+- **Production**: GitHub OAuth (callback configured for production URL)
+- **Preview builds**: Dev login (Credentials provider enabled via `VERCEL_ENV=preview`)
+- **Local dev**: Dev login (Credentials provider enabled via `NODE_ENV=development`)
 
 ## API Keys
 

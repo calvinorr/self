@@ -15,8 +15,11 @@ const providers: Provider[] = [
   }),
 ];
 
-// Add dev provider only in development
-if (process.env.NODE_ENV === "development") {
+// Add dev provider in development OR Vercel preview deployments
+// Preview deployments can't use OAuth due to dynamic callback URLs
+const isDevOrPreview = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "preview";
+
+if (isDevOrPreview) {
   providers.push(
     Credentials({
       id: "dev-login",
