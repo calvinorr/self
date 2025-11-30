@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { entries } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
 import { auth } from "@/auth";
+import {
+  getEntryById,
+  updateEntryById,
+  deleteEntryById,
+} from "@/lib/queries";
 
 export async function GET(
   req: Request,
@@ -15,15 +17,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const [entry] = await db
-      .select()
-      .from(entries)
-      .where(
-        and(
-          eq(entries.id, parseInt(id)),
-          eq(entries.userId, session.user.id)
-        )
-      );
+    const [entry] = await getEntryById(parseInt(id), session.user.id);
 
     if (!entry) {
       return NextResponse.json({ error: "Entry not found" }, { status: 404 });
@@ -53,22 +47,12 @@ export async function PUT(
     const body = await req.json();
     const { title, content, mood, aiInsight } = body;
 
-    const [updatedEntry] = await db
-      .update(entries)
-      .set({
-        title,
-        content,
-        mood,
-        aiInsight,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(entries.id, parseInt(id)),
-          eq(entries.userId, session.user.id)
-        )
-      )
-      .returning();
+    const [updatedEntry] = await updateEntryById(parseInt(id), session.user.id, {
+      title,
+      content,
+      mood,
+      aiInsight,
+    });
 
     if (!updatedEntry) {
       return NextResponse.json({ error: "Entry not found" }, { status: 404 });
@@ -95,15 +79,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const [deletedEntry] = await db
-      .delete(entries)
-      .where(
-        and(
-          eq(entries.id, parseInt(id)),
-          eq(entries.userId, session.user.id)
-        )
-      )
-      .returning();
+    const [deletedEntry] = await deleteEntryById(parseInt(id), session.user.id);
 
     if (!deletedEntry) {
       return NextResponse.json({ error: "Entry not found" }, { status: 404 });

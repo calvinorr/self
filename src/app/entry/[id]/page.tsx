@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sidebar } from "@/components/sidebar";
 import { Editor } from "@/components/editor";
+import { AIInsight } from "@/components/ai-insight";
 import { useAutosave } from "@/hooks/use-autosave";
 import { SaveStatusIndicator } from "@/components/save-status";
 import { cn } from "@/lib/utils";
@@ -31,7 +32,6 @@ export default function EntryPage({
   const [content, setContent] = useState("");
   const [mood, setMood] = useState<string | null>(null);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -122,30 +122,6 @@ export default function EntryPage({
       console.error("Failed to delete entry:", error);
     } finally {
       setIsDeleting(false);
-    }
-  };
-
-  const handleAnalyze = async () => {
-    if (!content.trim()) return;
-
-    setIsAnalyzing(true);
-    const stripHtml = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-
-    try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content: stripHtml(content) }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        setAiInsight(data.text);
-      }
-    } catch (err) {
-      console.error("AI Analysis error:", err);
-    } finally {
-      setIsAnalyzing(false);
     }
   };
 
@@ -300,60 +276,14 @@ export default function EntryPage({
               />
             </div>
 
-            {/* AI Reflection Panel */}
+            {/* AI Insight with Conversation */}
             <div className="mt-8">
-              <div className="rounded-xl border border-border bg-surface/50 p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="material-symbols-outlined text-xl text-primary"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      psychology
-                    </span>
-                    <p className="text-sm font-medium text-foreground">
-                      AI Reflection
-                    </p>
-                  </div>
-                  {!isAnalyzing && (
-                    <button
-                      onClick={handleAnalyze}
-                      disabled={!content.trim()}
-                      className="flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/20 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <span
-                        className="material-symbols-outlined text-base"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        auto_awesome
-                      </span>
-                      {aiInsight ? "Regenerate" : "Generate Insight"}
-                    </button>
-                  )}
-                </div>
-
-                {!aiInsight && !isAnalyzing && (
-                  <p className="text-sm text-muted-foreground">
-                    Get AI-powered reflections on your writing to gain deeper insights into your thoughts.
-                  </p>
-                )}
-
-                {isAnalyzing && (
-                  <div className="flex items-center gap-3 text-muted-foreground py-4">
-                    <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
-                    <span className="text-sm">Analyzing your thoughts...</span>
-                  </div>
-                )}
-
-                {aiInsight && !isAnalyzing && (
-                  <div className="rounded-lg bg-primary/5 border border-primary/10 p-4">
-                    <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
-                      {aiInsight}
-                    </p>
-                  </div>
-                )}
-              </div>
-
+              <AIInsight
+                title={title}
+                content={content}
+                existingInsight={aiInsight}
+                onInsightGenerated={setAiInsight}
+              />
             </div>
           </div>
         </div>
