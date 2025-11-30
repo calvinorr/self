@@ -6,6 +6,7 @@ import { AppLayout } from "@/components/app-layout";
 import { EntryCard } from "@/components/entry-card";
 import { InsightsPanel } from "@/components/insights-panel";
 import { auth } from "@/auth";
+import { isDevMode } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +19,11 @@ function getGreeting(): string {
 
 export default async function HomePage() {
   const session = await auth();
-  const isDev = process.env.NODE_ENV === "development";
 
-  // In development, show all entries regardless of user
+  // In development/preview, show all entries regardless of user
   // In production, filter by user ID
   const allEntries = session?.user?.id
-    ? isDev
+    ? isDevMode()
       ? await db.select().from(entries).orderBy(desc(entries.createdAt))
       : await db
           .select()
