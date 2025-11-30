@@ -18,7 +18,7 @@ const providers: Provider[] = [
 
 // Add dev provider in development OR Vercel preview deployments
 // Preview deployments can't use OAuth due to dynamic callback URLs
-if (isDevMode) {
+if (isDevMode()) {
   providers.push(
     Credentials({
       id: "dev-login",

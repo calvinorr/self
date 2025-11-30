@@ -14,7 +14,7 @@ export async function GET() {
 
     // In development/preview, show all entries regardless of user
     // In production, filter by user ID
-    const allEntries = isDevMode
+    const allEntries = isDevMode()
       ? await db.select().from(entries).orderBy(desc(entries.createdAt))
       : await db
           .select()

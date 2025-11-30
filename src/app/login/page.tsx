@@ -77,7 +77,7 @@ export default function LoginPage() {
             </form>
 
             {/* Dev Login - Shown in development and Vercel preview */}
-            {isDevMode && (
+            {isDevMode() && (
               <>
                 <div className="relative my-4">
                   <div className="absolute inset-0 flex items-center">

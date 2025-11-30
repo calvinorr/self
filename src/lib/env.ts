@@ -15,14 +15,23 @@
  *
  * Note: On Vercel, NODE_ENV is always "production" even for previews,
  * so we must also check VERCEL_ENV.
+ *
+ * This is a function (not a constant) to ensure it's evaluated at runtime,
+ * which is necessary for server-side code in Next.js.
  */
-export const isDevMode =
-  process.env.NODE_ENV === "development" ||
-  process.env.VERCEL_ENV === "preview";
+export function isDevMode(): boolean {
+  return (
+    process.env.NODE_ENV === "development" ||
+    process.env.VERCEL_ENV === "preview"
+  );
+}
 
 /**
  * Returns true only in actual production (not preview deployments)
  */
-export const isProduction =
-  process.env.NODE_ENV === "production" &&
-  process.env.VERCEL_ENV !== "preview";
+export function isProduction(): boolean {
+  return (
+    process.env.NODE_ENV === "production" &&
+    process.env.VERCEL_ENV !== "preview"
+  );
+}

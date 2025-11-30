@@ -18,7 +18,7 @@ export async function GET(
     const { id } = await params;
 
     // In development/preview, skip userId check to allow viewing any entry
-    const [entry] = isDevMode
+    const [entry] = isDevMode()
       ? await db
           .select()
           .from(entries)
@@ -62,7 +62,7 @@ export async function PUT(
     const { title, content, mood, aiInsight } = body;
 
     // In development/preview, skip userId check
-    const [updatedEntry] = isDevMode
+    const [updatedEntry] = isDevMode()
       ? await db
           .update(entries)
           .set({
@@ -118,7 +118,7 @@ export async function DELETE(
     const { id } = await params;
 
     // In development/preview, skip userId check
-    const [deletedEntry] = isDevMode
+    const [deletedEntry] = isDevMode()
       ? await db
           .delete(entries)
           .where(eq(entries.id, parseInt(id)))
