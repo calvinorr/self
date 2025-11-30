@@ -6,19 +6,10 @@ import Link from "next/link";
 import { Sidebar } from "@/components/sidebar";
 import { Editor } from "@/components/editor";
 import { AIInsight } from "@/components/ai-insight";
+import { MoodPicker } from "@/components/mood-picker";
 import { useAutosave } from "@/hooks/use-autosave";
 import { SaveStatusIndicator } from "@/components/save-status";
-import { cn } from "@/lib/utils";
 import type { Entry } from "@/db/schema";
-
-// Mood options with distinct colors always visible
-const moods = [
-  { value: "great", icon: "sentiment_very_satisfied", label: "Great", color: "text-emerald-400", bg: "bg-emerald-400/15 border-emerald-400/40 hover:bg-emerald-400/25" },
-  { value: "good", icon: "sentiment_satisfied", label: "Good", color: "text-sky-400", bg: "bg-sky-400/15 border-sky-400/40 hover:bg-sky-400/25" },
-  { value: "okay", icon: "sentiment_neutral", label: "Okay", color: "text-amber-400", bg: "bg-amber-400/15 border-amber-400/40 hover:bg-amber-400/25" },
-  { value: "low", icon: "sentiment_dissatisfied", label: "Low", color: "text-orange-400", bg: "bg-orange-400/15 border-orange-400/40 hover:bg-orange-400/25" },
-  { value: "rough", icon: "sentiment_sad", label: "Rough", color: "text-rose-400", bg: "bg-rose-400/15 border-rose-400/40 hover:bg-rose-400/25" },
-];
 
 export default function EntryPage({
   params,
@@ -241,28 +232,13 @@ export default function EntryPage({
                 className="flex-1 bg-transparent text-2xl font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none"
               />
 
-              {/* Mood Tracker - Compact inline */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                {moods.map((m) => (
-                  <button
-                    key={m.value}
-                    onClick={() => setMood(mood === m.value ? null : m.value)}
-                    className={cn(
-                      "flex items-center justify-center w-9 h-9 rounded-lg border transition-all duration-200",
-                      mood === m.value
-                        ? `${m.bg} ${m.color} border-current`
-                        : `border-transparent hover:border-border hover:bg-surface-elevated/50`
-                    )}
-                    title={m.label}
-                  >
-                    <span
-                      className={cn("material-symbols-outlined text-xl", m.color)}
-                      style={{ fontVariationSettings: mood === m.value ? "'FILL' 1, 'wght' 500" : "'FILL' 0, 'wght' 400" }}
-                    >
-                      {m.icon}
-                    </span>
-                  </button>
-                ))}
+              {/* Mood Picker with AI suggestion */}
+              <div className="shrink-0">
+                <MoodPicker
+                  value={mood}
+                  onChange={setMood}
+                  content={content}
+                />
               </div>
             </div>
 

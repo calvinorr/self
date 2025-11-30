@@ -331,7 +331,7 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 | ID | Story | Priority | Points | Status |
 |----|-------|----------|--------|--------|
 | E7-S1 | As a user, I want to ask follow-up questions about my AI insights | P2 | 8 | ✅ Done |
-| E7-S2 | As a user, I want AI to automatically detect my mood from my writing | P2 | 5 | Planned |
+| E7-S2 | As a user, I want AI to automatically detect my mood from my writing | P2 | 5 | ✅ Done |
 | E7-S3 | As a user, I want AI to notice and celebrate my growth over time | P2 | 5 | Planned |
 | E7-S4 | As a user, I want personalized prompts based on my themes and interests | P2 | 5 | Planned |
 | E7-S5 | As a user, I want gentle therapeutic questions to deepen reflection | P3 | 5 | Planned |
@@ -346,11 +346,11 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 - [x] Clear conversation history per entry
 - [x] BONUS: Save conversation insights to enrich entry's AI insight
 
-**E7-S2: Sentiment Detection**
-- [ ] AI suggests mood based on entry content
-- [ ] User can accept or override
-- [ ] Accuracy target: 80%+ match with user selection
-- [ ] Never overrides explicit user choice
+**E7-S2: Sentiment Detection** ✅ Complete
+- [x] AI suggests mood based on entry content
+- [x] User can accept or override
+- [x] Accuracy target: 80%+ match with user selection
+- [x] Never overrides explicit user choice
 
 **E7-S3: Growth Tracking**
 - [ ] Quarterly "growth report" comparing themes/sentiment over time
