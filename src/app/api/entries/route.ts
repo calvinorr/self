@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { entries } from "@/db/schema";
-import { desc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { isDevMode } from "@/lib/env";
+import { getEntriesForUser } from "@/lib/queries";
 
 export async function GET() {
   try {
@@ -12,15 +11,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // In development/preview, show all entries regardless of user
-    // In production, filter by user ID
-    const allEntries = isDevMode()
-      ? await db.select().from(entries).orderBy(desc(entries.createdAt))
-      : await db
-          .select()
-          .from(entries)
-          .where(eq(entries.userId, session.user.id))
-          .orderBy(desc(entries.createdAt));
+    const allEntries = await getEntriesForUser(session.user.id);
 
     return NextResponse.json(allEntries);
   } catch (error) {

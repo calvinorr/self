@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { entries } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
 import { auth } from "@/auth";
-import { isDevMode } from "@/lib/env";
+import {
+  getEntryById,
+  updateEntryById,
+  deleteEntryById,
+} from "@/lib/queries";
 
 export async function GET(
   req: Request,
@@ -16,22 +17,7 @@ export async function GET(
     }
 
     const { id } = await params;
-
-    // In development/preview, skip userId check to allow viewing any entry
-    const [entry] = isDevMode()
-      ? await db
-          .select()
-          .from(entries)
-          .where(eq(entries.id, parseInt(id)))
-      : await db
-          .select()
-          .from(entries)
-          .where(
-            and(
-              eq(entries.id, parseInt(id)),
-              eq(entries.userId, session.user.id)
-            )
-          );
+    const [entry] = await getEntryById(parseInt(id), session.user.id);
 
     if (!entry) {
       return NextResponse.json({ error: "Entry not found" }, { status: 404 });
@@ -61,35 +47,12 @@ export async function PUT(
     const body = await req.json();
     const { title, content, mood, aiInsight } = body;
 
-    // In development/preview, skip userId check
-    const [updatedEntry] = isDevMode()
-      ? await db
-          .update(entries)
-          .set({
-            title,
-            content,
-            mood,
-            aiInsight,
-            updatedAt: new Date(),
-          })
-          .where(eq(entries.id, parseInt(id)))
-          .returning()
-      : await db
-          .update(entries)
-          .set({
-            title,
-            content,
-            mood,
-            aiInsight,
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(entries.id, parseInt(id)),
-              eq(entries.userId, session.user.id)
-            )
-          )
-          .returning();
+    const [updatedEntry] = await updateEntryById(parseInt(id), session.user.id, {
+      title,
+      content,
+      mood,
+      aiInsight,
+    });
 
     if (!updatedEntry) {
       return NextResponse.json({ error: "Entry not found" }, { status: 404 });
@@ -116,22 +79,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-
-    // In development/preview, skip userId check
-    const [deletedEntry] = isDevMode()
-      ? await db
-          .delete(entries)
-          .where(eq(entries.id, parseInt(id)))
-          .returning()
-      : await db
-          .delete(entries)
-          .where(
-            and(
-              eq(entries.id, parseInt(id)),
-              eq(entries.userId, session.user.id)
-            )
-          )
-          .returning();
+    const [deletedEntry] = await deleteEntryById(parseInt(id), session.user.id);
 
     if (!deletedEntry) {
       return NextResponse.json({ error: "Entry not found" }, { status: 404 });

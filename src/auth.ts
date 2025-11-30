@@ -18,6 +18,10 @@ const providers: Provider[] = [
 
 // Add dev provider in development OR Vercel preview deployments
 // Preview deployments can't use OAuth due to dynamic callback URLs
+//
+// NOTE: This runs at module load time (cold start), not per-request.
+// On Vercel this is fine since env vars are consistent, but be aware
+// if deploying elsewhere that the provider list is determined once.
 if (isDevMode()) {
   providers.push(
     Credentials({

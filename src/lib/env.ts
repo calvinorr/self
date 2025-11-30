@@ -20,11 +20,23 @@
  * which is necessary for server-side code in Next.js.
  */
 export function isDevMode(): boolean {
-  return (
+  const result =
     process.env.NODE_ENV === "development" ||
-    process.env.VERCEL_ENV === "preview"
-  );
+    process.env.VERCEL_ENV === "preview";
+
+  // Log once per cold start to aid debugging on preview deploys
+  if (result && !isDevMode._logged) {
+    console.log("[ENV] Dev mode active", {
+      NODE_ENV: process.env.NODE_ENV,
+      VERCEL_ENV: process.env.VERCEL_ENV,
+    });
+    isDevMode._logged = true;
+  }
+
+  return result;
 }
+// Track if we've logged to avoid spamming
+isDevMode._logged = false;
 
 /**
  * Returns true only in actual production (not preview deployments)
