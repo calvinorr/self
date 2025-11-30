@@ -319,6 +319,8 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 ### Epic Statement
 *As a long-term journaler, I want my AI companion to grow with me—understanding my history, tracking my growth, and engaging in deeper dialogue, so that insights become increasingly valuable over time.*
 
+### Status: In Progress
+
 ### Business Value
 - Deepest differentiator
 - Increases switching costs
@@ -326,22 +328,23 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 
 ### User Stories
 
-| ID | Story | Priority | Points |
-|----|-------|----------|--------|
-| E7-S1 | As a user, I want to ask follow-up questions about my AI insights | P2 | 8 |
-| E7-S2 | As a user, I want AI to automatically detect my mood from my writing | P2 | 5 |
-| E7-S3 | As a user, I want AI to notice and celebrate my growth over time | P2 | 5 |
-| E7-S4 | As a user, I want personalized prompts based on my themes and interests | P2 | 5 |
-| E7-S5 | As a user, I want gentle therapeutic questions to deepen reflection | P3 | 5 |
-| E7-S6 | As a user, I want to be notified if AI detects concerning patterns | P3 | 8 |
+| ID | Story | Priority | Points | Status |
+|----|-------|----------|--------|--------|
+| E7-S1 | As a user, I want to ask follow-up questions about my AI insights | P2 | 8 | ✅ Done |
+| E7-S2 | As a user, I want AI to automatically detect my mood from my writing | P2 | 5 | Planned |
+| E7-S3 | As a user, I want AI to notice and celebrate my growth over time | P2 | 5 | Planned |
+| E7-S4 | As a user, I want personalized prompts based on my themes and interests | P2 | 5 | Planned |
+| E7-S5 | As a user, I want gentle therapeutic questions to deepen reflection | P3 | 5 | Planned |
+| E7-S6 | As a user, I want to be notified if AI detects concerning patterns | P3 | 8 | Planned |
 
 ### Acceptance Criteria
 
-**E7-S1: Conversational Insights**
-- [ ] "Ask more" button on AI insight card
-- [ ] Maintains context of current entry
-- [ ] Remembers previous questions in session
-- [ ] Clear conversation history per entry
+**E7-S1: Conversational Insights** ✅ Complete
+- [x] "Ask more" button on AI insight card
+- [x] Maintains context of current entry
+- [x] Remembers previous questions in session
+- [x] Clear conversation history per entry
+- [x] BONUS: Save conversation insights to enrich entry's AI insight
 
 **E7-S2: Sentiment Detection**
 - [ ] AI suggests mood based on entry content
@@ -444,5 +447,5 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 
 *This epic storyline is a living document. Update as priorities shift and learnings emerge.*
 
-**Last Updated**: November 29, 2024
+**Last Updated**: November 30, 2024
 **Owner**: Product Team
