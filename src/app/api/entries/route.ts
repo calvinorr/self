@@ -11,11 +11,11 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // In development, show all entries regardless of user
+    // In development/preview, show all entries regardless of user
     // In production, filter by user ID
-    const isDev = process.env.NODE_ENV === "development";
+    const isDevOrPreview = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "preview";
 
-    const allEntries = isDev
+    const allEntries = isDevOrPreview
       ? await db.select().from(entries).orderBy(desc(entries.createdAt))
       : await db
           .select()

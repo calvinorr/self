@@ -15,10 +15,10 @@ export async function GET(
     }
 
     const { id } = await params;
-    const isDev = process.env.NODE_ENV === "development";
+    const isDevOrPreview = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "preview";
 
-    // In development, skip userId check to allow viewing any entry
-    const [entry] = isDev
+    // In development/preview, skip userId check to allow viewing any entry
+    const [entry] = isDevOrPreview
       ? await db
           .select()
           .from(entries)
@@ -60,10 +60,10 @@ export async function PUT(
     const { id } = await params;
     const body = await req.json();
     const { title, content, mood, aiInsight } = body;
-    const isDev = process.env.NODE_ENV === "development";
+    const isDevOrPreview = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "preview";
 
-    // In development, skip userId check
-    const [updatedEntry] = isDev
+    // In development/preview, skip userId check
+    const [updatedEntry] = isDevOrPreview
       ? await db
           .update(entries)
           .set({
@@ -117,10 +117,10 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const isDev = process.env.NODE_ENV === "development";
+    const isDevOrPreview = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "preview";
 
-    // In development, skip userId check
-    const [deletedEntry] = isDev
+    // In development/preview, skip userId check
+    const [deletedEntry] = isDevOrPreview
       ? await db
           .delete(entries)
           .where(eq(entries.id, parseInt(id)))
