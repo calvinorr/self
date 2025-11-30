@@ -22,6 +22,9 @@ export default function NewEntryPage() {
   const [showInspiration, setShowInspiration] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState<string | null>(null);
   const [showAiPanel, setShowAiPanel] = useState(false);
+  const [personalizedPrompts, setPersonalizedPrompts] = useState<string[]>([]);
+  const [isLoadingPersonalized, setIsLoadingPersonalized] = useState(false);
+  const [promptType, setPromptType] = useState<"random" | "personalized">("random");
   const isCreatingRef = useRef(false);
 
   const handleAutosave = useCallback(async () => {
@@ -125,7 +128,42 @@ export default function NewEntryPage() {
 
   const generatePrompt = () => {
     setCurrentPrompt(getRandomPrompt());
+    setPromptType("random");
     setShowInspiration(true);
+  };
+
+  const fetchPersonalizedPrompts = async () => {
+    setIsLoadingPersonalized(true);
+    setShowInspiration(true);
+    setPromptType("personalized");
+
+    try {
+      const response = await fetch("/api/prompts/personalized");
+      const data = await response.json();
+
+      if (response.ok && data.prompts?.length > 0) {
+        setPersonalizedPrompts(data.prompts);
+        setCurrentPrompt(data.prompts[0]);
+      } else {
+        // Fallback to random if personalized fails
+        setCurrentPrompt(getRandomPrompt());
+        setPromptType("random");
+      }
+    } catch (err) {
+      console.error("Failed to fetch personalized prompts:", err);
+      setCurrentPrompt(getRandomPrompt());
+      setPromptType("random");
+    } finally {
+      setIsLoadingPersonalized(false);
+    }
+  };
+
+  const nextPersonalizedPrompt = () => {
+    if (personalizedPrompts.length > 0) {
+      const currentIndex = personalizedPrompts.indexOf(currentPrompt || "");
+      const nextIndex = (currentIndex + 1) % personalizedPrompts.length;
+      setCurrentPrompt(personalizedPrompts[nextIndex]);
+    }
   };
 
   const usePrompt = () => {
@@ -182,65 +220,118 @@ export default function NewEntryPage() {
         {/* Main Writing Area - Full Width */}
         <div className="flex-1 overflow-y-auto scrollbar-thin">
           <div className="max-w-5xl mx-auto px-8 pt-8 pb-16">
-            {/* Inspiration Button */}
+            {/* Inspiration Buttons */}
             {!content.trim() && !showInspiration && (
-              <button
-                onClick={generatePrompt}
-                className="group mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                <span
-                  className="material-symbols-outlined text-lg group-hover:animate-pulse"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
+              <div className="mb-4 flex items-center gap-4">
+                <button
+                  onClick={generatePrompt}
+                  className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  auto_awesome
-                </span>
-                <span>Need inspiration?</span>
-              </button>
+                  <span
+                    className="material-symbols-outlined text-lg group-hover:animate-pulse"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    shuffle
+                  </span>
+                  <span>Random prompt</span>
+                </button>
+                <span className="text-muted-foreground/30">or</span>
+                <button
+                  onClick={fetchPersonalizedPrompts}
+                  className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <span
+                    className="material-symbols-outlined text-lg group-hover:animate-pulse"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    auto_awesome
+                  </span>
+                  <span>Personalized for you</span>
+                </button>
+              </div>
             )}
 
             {/* Inspiration Card */}
-            {showInspiration && currentPrompt && (
+            {showInspiration && (
               <div className="mb-6 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 via-primary/10 to-transparent p-5">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20">
-                    <span
-                      className="material-symbols-outlined text-lg text-primary"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      auto_awesome
-                    </span>
+                {isLoadingPersonalized ? (
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20">
+                      <span className="material-symbols-outlined text-lg text-primary animate-spin">
+                        progress_activity
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-primary uppercase tracking-wider mb-1">
+                        Personalizing...
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Creating prompts based on your journal themes
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-primary uppercase tracking-wider mb-1">
-                      Writing Prompt
-                    </p>
-                    <p className="text-base text-foreground leading-relaxed">
-                      {currentPrompt}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 mt-4 ml-12">
-                  <button
-                    onClick={usePrompt}
-                    className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-sm">check</span>
-                    Use this
-                  </button>
-                  <button
-                    onClick={generatePrompt}
-                    className="flex items-center gap-1.5 rounded-lg bg-surface-elevated px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-sm">refresh</span>
-                    Another
-                  </button>
-                  <button
-                    onClick={() => setShowInspiration(false)}
-                    className="rounded-lg px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Dismiss
-                  </button>
-                </div>
+                ) : currentPrompt ? (
+                  <>
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20">
+                        <span
+                          className="material-symbols-outlined text-lg text-primary"
+                          style={{ fontVariationSettings: "'FILL' 1" }}
+                        >
+                          {promptType === "personalized" ? "auto_awesome" : "shuffle"}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-primary uppercase tracking-wider mb-1">
+                          {promptType === "personalized" ? "Personalized Prompt" : "Writing Prompt"}
+                        </p>
+                        <p className="text-base text-foreground leading-relaxed">
+                          {currentPrompt}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-4 ml-12">
+                      <button
+                        onClick={usePrompt}
+                        className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-sm">check</span>
+                        Use this
+                      </button>
+                      <button
+                        onClick={promptType === "personalized" ? nextPersonalizedPrompt : generatePrompt}
+                        className="flex items-center gap-1.5 rounded-lg bg-surface-elevated px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-sm">refresh</span>
+                        Another
+                      </button>
+                      {promptType === "personalized" && (
+                        <button
+                          onClick={generatePrompt}
+                          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-sm">shuffle</span>
+                          Random
+                        </button>
+                      )}
+                      {promptType === "random" && (
+                        <button
+                          onClick={fetchPersonalizedPrompts}
+                          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-sm">auto_awesome</span>
+                          Personalize
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setShowInspiration(false)}
+                        className="rounded-lg px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </>
+                ) : null}
               </div>
             )}
 

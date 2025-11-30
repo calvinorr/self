@@ -333,7 +333,7 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 | E7-S1 | As a user, I want to ask follow-up questions about my AI insights | P2 | 8 | ✅ Done |
 | E7-S2 | As a user, I want AI to automatically detect my mood from my writing | P2 | 5 | ✅ Done |
 | E7-S3 | As a user, I want AI to notice and celebrate my growth over time | P2 | 5 | ✅ Done |
-| E7-S4 | As a user, I want personalized prompts based on my themes and interests | P2 | 5 | Planned |
+| E7-S4 | As a user, I want personalized prompts based on my themes and interests | P2 | 5 | ✅ Done |
 | E7-S5 | As a user, I want gentle therapeutic questions to deepen reflection | P3 | 5 | Planned |
 | E7-S6 | As a user, I want to be notified if AI detects concerning patterns | P3 | 8 | Planned |
 
@@ -358,6 +358,13 @@ Every user who opens Journal is embarking on a journey of self-discovery. They a
 - [x] Gently notes recurring challenges (Growth Areas section)
 - [x] Encouraging, never judgmental tone
 - [x] Dedicated /growth page with sidebar navigation
+
+**E7-S4: Personalized Prompts** ✅ Complete
+- [x] AI analyzes user's journal themes and interests
+- [x] Generates 3 personalized writing prompts
+- [x] "Personalized for you" option alongside random prompts
+- [x] Graceful fallback for users with < 3 entries
+- [x] Can cycle through personalized prompts or switch to random
 
 ### Dependencies
 - E3 (Insight & Discovery) for historical analysis
