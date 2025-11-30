@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { entries } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
+import { isDevMode } from "@/lib/env";
 
 export async function GET() {
   try {
@@ -13,9 +14,7 @@ export async function GET() {
 
     // In development/preview, show all entries regardless of user
     // In production, filter by user ID
-    const isDevOrPreview = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "preview";
-
-    const allEntries = isDevOrPreview
+    const allEntries = isDevMode
       ? await db.select().from(entries).orderBy(desc(entries.createdAt))
       : await db
           .select()

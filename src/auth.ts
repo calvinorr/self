@@ -3,6 +3,7 @@ import type { Provider } from "next-auth/providers";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
+import { isDevMode } from "@/lib/env";
 
 const providers: Provider[] = [
   GitHub({
@@ -17,9 +18,7 @@ const providers: Provider[] = [
 
 // Add dev provider in development OR Vercel preview deployments
 // Preview deployments can't use OAuth due to dynamic callback URLs
-const isDevOrPreview = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "preview";
-
-if (isDevOrPreview) {
+if (isDevMode) {
   providers.push(
     Credentials({
       id: "dev-login",

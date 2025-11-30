@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { entries } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { auth } from "@/auth";
+import { isDevMode } from "@/lib/env";
 
 export async function GET(
   req: Request,
@@ -15,10 +16,9 @@ export async function GET(
     }
 
     const { id } = await params;
-    const isDevOrPreview = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "preview";
 
     // In development/preview, skip userId check to allow viewing any entry
-    const [entry] = isDevOrPreview
+    const [entry] = isDevMode
       ? await db
           .select()
           .from(entries)
@@ -60,10 +60,9 @@ export async function PUT(
     const { id } = await params;
     const body = await req.json();
     const { title, content, mood, aiInsight } = body;
-    const isDevOrPreview = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "preview";
 
     // In development/preview, skip userId check
-    const [updatedEntry] = isDevOrPreview
+    const [updatedEntry] = isDevMode
       ? await db
           .update(entries)
           .set({
@@ -117,10 +116,9 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const isDevOrPreview = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "preview";
 
     // In development/preview, skip userId check
-    const [deletedEntry] = isDevOrPreview
+    const [deletedEntry] = isDevMode
       ? await db
           .delete(entries)
           .where(eq(entries.id, parseInt(id)))

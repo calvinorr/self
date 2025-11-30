@@ -1,7 +1,5 @@
 import { signIn } from "@/auth";
-
-// Show dev login in development OR Vercel preview deployments
-const isDevOrPreview = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "preview";
+import { isDevMode } from "@/lib/env";
 
 export default function LoginPage() {
   return (
@@ -79,7 +77,7 @@ export default function LoginPage() {
             </form>
 
             {/* Dev Login - Shown in development and Vercel preview */}
-            {isDevOrPreview && (
+            {isDevMode && (
               <>
                 <div className="relative my-4">
                   <div className="absolute inset-0 flex items-center">
