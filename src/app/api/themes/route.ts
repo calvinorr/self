@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     }));
 
     const { text } = await generateText({
-      model: google("gemini-2.0-flash"),
+      model: google("gemini-2.5-flash"),
       system: `You are an insightful journal analyst. Your task is to identify recurring themes and patterns across multiple journal entries.
 
 Your response MUST be valid JSON with this exact structure:

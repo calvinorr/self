@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       .join("\n\n");
 
     const { text } = await generateText({
-      model: google("gemini-2.0-flash"),
+      model: google("gemini-2.5-flash"),
       system: `You are a thoughtful journal assistant having a conversation about a journal entry. You've already provided an initial insight, and now the user wants to explore deeper.
 
 Your responses should:

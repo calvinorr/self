@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     }
 
     const { text } = await generateText({
-      model: google("gemini-2.0-flash"),
+      model: google("gemini-2.5-flash"),
       system: `You are a thoughtful journal assistant. Analyze journal entries with empathy and provide meaningful insights.
 
 Your analysis should:

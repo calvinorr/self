@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     const timeRangeLabel = timeRange === "week" ? "7 days" : timeRange === "month" ? "30 days" : "all time";
 
     const { text } = await generateText({
-      model: google("gemini-2.0-flash"),
+      model: google("gemini-2.5-flash"),
       system: `You are an empathetic journal analyst. Your task is to provide meaningful insights from journal entries.
 
 Your response MUST be valid JSON with this exact structure:

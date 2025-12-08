@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       .join("\n\n");
 
     const { text } = await generateText({
-      model: google("gemini-2.0-flash"),
+      model: google("gemini-2.5-flash"),
       system: `You are a journal insight synthesizer. Your task is to create an enriched insight that combines the original reflection with key takeaways from a follow-up conversation.
 
 Your response should:

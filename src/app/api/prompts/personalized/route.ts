@@ -39,7 +39,7 @@ export async function GET() {
     }));
 
     const { text } = await generateText({
-      model: google("gemini-2.0-flash"),
+      model: google("gemini-2.5-flash"),
       system: `You are a thoughtful journaling companion who creates personalized writing prompts.
 
 Your task is to analyze the user's journal entries and generate 3 unique, personalized prompts that:

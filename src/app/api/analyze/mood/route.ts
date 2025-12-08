@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     }
 
     const { text } = await generateText({
-      model: google("gemini-2.0-flash"),
+      model: google("gemini-2.5-flash"),
       system: `You are a mood analyzer for a journaling app. Your task is to detect the emotional tone of journal entries.
 
 Analyze the text and respond with ONLY ONE of these exact mood values:

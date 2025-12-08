@@ -90,7 +90,7 @@ export async function POST(req: Request) {
     const previousMonthName = new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleDateString("en-US", { month: "long" });
 
     const { text } = await generateText({
-      model: google("gemini-2.0-flash"),
+      model: google("gemini-2.5-flash"),
       system: `You are a warm, supportive journaling companion who helps users recognize their personal growth. Your role is to celebrate progress and gently acknowledge challenges with compassion.
 
 Your response MUST be valid JSON with this exact structure:

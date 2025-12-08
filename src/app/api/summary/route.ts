@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     const topMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
 
     const { text } = await generateText({
-      model: google("gemini-2.0-flash"),
+      model: google("gemini-2.5-flash"),
       system: `You are a warm, supportive journal companion providing ${periodLabel} reflection summaries.
 
 Your response MUST be valid JSON with this exact structure:
