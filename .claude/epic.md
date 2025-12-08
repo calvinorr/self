@@ -6,7 +6,7 @@
 
 | ID | Story | Priority | Status |
 |----|-------|----------|--------|
-| E0-P0 | [Upgrade to Gemini 2.5 Flash](stories/e0-p0-ai-model-upgrade.md) | **P0** | not-started |
+| E0-P0 | [Upgrade to Gemini 2.5 Flash](stories/e0-p0-ai-model-upgrade.md) | **P0** | ✅ complete |
 
 > Must complete before starting E6 stories
 
@@ -32,6 +32,6 @@
 - Recommend 50+ entries for growth tracking features
 
 ## Tech Stack
-- **AI**: Google Gemini 2.0 Flash
+- **AI**: Google Gemini 2.5 Flash
 - **Database**: Turso (SQLite)
 - **Framework**: Next.js 15
